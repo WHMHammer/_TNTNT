@@ -2,7 +2,7 @@ pub mod course;
 pub mod meta;
 
 #[derive(Debug, Default)]
-pub struct TjaChart {
+pub struct Chart {
     pub meta: meta::Meta,
     pub easy_course: Option<course::Course>,
     pub normal_course: Option<course::Course>,

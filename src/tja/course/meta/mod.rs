@@ -1,9 +1,7 @@
 pub mod course;
 pub mod exam;
 pub mod style;
-pub use {
-    course::Course, exam::Exam, style::Style,
-};
+pub use {course::Course, exam::Exam, style::Style};
 
 #[derive(Debug)]
 pub struct Meta {
@@ -21,12 +19,12 @@ pub struct Meta {
 impl Default for Meta {
     fn default() -> Self {
         Self {
-            course: Course::Oni,
+            course: Course::default(),
             level: 0,
             balloon: Vec::new(),
             scoreinit: 0,
             scorediff: 100,
-            style: Style::Single,
+            style: Style::default(),
             exam1: None,
             exam2: None,
             exam3: None,

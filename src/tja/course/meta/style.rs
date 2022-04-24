@@ -13,3 +13,9 @@ impl Style {
         }
     }
 }
+
+impl Default for Style {
+    fn default() -> Self {
+        Self::Single
+    }
+}

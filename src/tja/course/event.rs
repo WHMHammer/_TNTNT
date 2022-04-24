@@ -19,12 +19,7 @@ pub enum Type {
     GOGOEND,
     BARLINEOFF,
     BARLINEON,
-    BRANCH(
-        branch::Type,
-        Vec<Event>,
-        Vec<Event>,
-        Vec<Event>
-    ), // branch type (with thresholds), #N branch, #E branch, #M branch
+    BRANCH(branch::Type, f64, f64, Vec<Event>, Vec<Event>, Vec<Event>), // branch type, #E threshold, #M threshold, #N branch, #E branch, #M branch
     SECTION,
     LYRIC(String),
     LEVELHOLD,

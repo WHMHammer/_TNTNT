@@ -27,8 +27,53 @@ pub struct Exam {
 }
 
 impl Exam {
-    pub fn from_str(_slice: &str) -> Option<Self> {
-        None
-        // TODO: implement parsing
+    pub fn from_str(slice: &str) -> Option<Self> {
+        use Condition::*;
+        use Scope::*;
+        let mut values = slice.split(',');
+        let condition = match values.next() {
+            Some("g") => g,
+            Some("jp") => jp,
+            Some("jg") => jg,
+            Some("jb") => jb,
+            Some("s") => s,
+            Some("r") => r,
+            Some("h") => h,
+            Some("c") => c,
+            _ => {
+                return None;
+            }
+        };
+        let red = if let Some(value) = values.next() {
+            if let Ok(value) = value.parse() {
+                value
+            } else {
+                return None;
+            }
+        } else {
+            return None;
+        };
+        let gold = if let Some(value) = values.next() {
+            if let Ok(value) = value.parse() {
+                value
+            } else {
+                return None;
+            }
+        } else {
+            return None;
+        };
+        let scope = match values.next() {
+            Some("m") => m,
+            Some("l") => l,
+            _ => {
+                return None;
+            }
+        };
+        Some(Self {
+            condition,
+            red,
+            gold,
+            scope,
+        })
     }
 }

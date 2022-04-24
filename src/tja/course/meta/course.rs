@@ -23,3 +23,9 @@ impl Course {
         }
     }
 }
+
+impl Default for Course {
+    fn default() -> Self {
+        Self::Oni
+    }
+}

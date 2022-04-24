@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ScoreMode {
     Mode0, // AC 1 to AC 7
     Mode1, // AC 8 to AC 14
@@ -17,3 +17,9 @@ impl ScoreMode {
 }
 
 // TODO: add score calculation calculations (using functional programming)
+
+impl Default for ScoreMode {
+    fn default() -> Self {
+        Self::Mode1
+    }
+}

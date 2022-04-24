@@ -1,6 +1,6 @@
+pub mod branch;
 pub mod event;
 pub mod meta;
-pub mod branch;
 pub use event::Event;
 
 #[derive(Debug, Default)]

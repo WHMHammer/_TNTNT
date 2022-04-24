@@ -27,7 +27,7 @@ impl Default for Meta {
             offset: 0.0,
             demostart: 0.0,
             genre: None,
-            scoremode: ScoreMode::Mode1,
+            scoremode: ScoreMode::default(),
             life: 0,
             bgmovie: None,
         }

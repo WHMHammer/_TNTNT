@@ -1,29 +1,26 @@
-#[allow(non_snake_case)]
-pub mod en_US;
-#[allow(non_snake_case)]
-pub mod zh_CN;
-
 #[derive(Debug, Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum Locale {
     en_US,
     zh_CN,
 }
+
 pub use Locale::*;
+
+impl Default for Locale {
+    fn default() -> Self {
+        en_US
+    }
+}
 
 #[derive(Debug, Default)]
 #[allow(non_snake_case)]
 pub struct I18nString {
-    default: String,
     en_US: Option<String>,
     zh_CN: Option<String>,
 }
 
 impl I18nString {
-    pub fn set_default(&mut self, slice: &str) {
-        self.default = slice.to_string();
-    }
-
     pub fn set(&mut self, slice: &str, locale: Locale) {
         match locale {
             en_US => self.en_US = Some(slice.to_string()),
@@ -31,12 +28,21 @@ impl I18nString {
         }
     }
 
-    pub fn get(&self, locale: Locale) -> &String {
-        match locale {
+    pub fn get(&self, locales: &Vec<Locale>) -> &str {
+        // locales in decreasing order of preference
+        for locale in locales {
+            if let Some(string) = match locale {
+                en_US => &self.en_US,
+                zh_CN => &self.zh_CN,
+            } {
+                return string;
+            }
+        }
+        match Locale::default() {
             en_US => &self.en_US,
             zh_CN => &self.zh_CN,
         }
-        .as_ref()
-        .unwrap_or(&self.default)
+        .as_deref()
+        .unwrap_or("[text not found]")
     }
 }
