@@ -1,5 +1,11 @@
+mod i18n;
+mod loaders;
 mod tja;
 
 fn main() {
-    println!("{:#?}", tja::Chart::from_path("Chun Jie Xu Qu.tja").unwrap());
+    let chart = loaders::load_tja_from_string(
+        loaders::load_text_from_path("Anzu no Uta.tja", None).unwrap(),
+        None,
+    );
+    println!("{:#?}", chart);
 }
