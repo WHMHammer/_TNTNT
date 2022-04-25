@@ -1,11 +1,10 @@
-use crate::conf::Conf;
 use crate::i18n;
 use crate::tja;
 
 pub fn load_tja_from_path<P>(
     path: P,
     encoding: Option<&'static encoding_rs::Encoding>,
-    conf: &Conf,
+    conf: &crate::conf::Conf,
     genre: Option<&String>,
 ) -> Option<tja::Chart>
 where
@@ -38,14 +37,30 @@ where
         let mut chart = tja::Chart::default();
         chart.meta.genre = genre.map(String::clone);
         chart.meta.scoremode = conf.scoremode;
+        let mut char_indices = text.char_indices();
+        let mut i = 0;
         let mut index_low = 0;
-        let mut previous_character = ' ';
         let mut index_high = 0;
-        let mut flag_comment = false;
         let mut key = "";
-        let mut flag_command = false;
         let mut course = tja::course::Course::default();
-        for (i, character) in text.char_indices() {
+        let mut events = &mut course.p1;
+        let mut measure: (u8, u8) = (4, 4); // TODO: define the default measure somewhere else
+        let mut bpm = 120.0; // TODO: define the default BPM somewhere else
+        let mut previous_character = ' ';
+        let mut flag_eof = false;
+        let mut flag_comment = false;
+        let mut flag_command = false;
+        let mut flag_barline = true;
+        loop {
+            let character = if let Some((index, character)) = char_indices.next() {
+                i = index;
+                character
+            } else {
+                // the file may not have an ending line break
+                flag_eof = true;
+                i += 1;
+                '\n'
+            };
             if character == '\n' {
                 let mut value = "";
                 if !flag_comment {
@@ -56,16 +71,16 @@ where
                     }
                 }
                 if key.is_empty() {
-                    key = text.get(index_low..index_high).unwrap();
+                    key = text[index_low..index_high].trim();
                 } else {
-                    value = text.get(index_low..index_high).unwrap();
+                    value = text[index_low..index_high].trim();
                 }
                 match key {
                     "TITLE" => {
-                        chart.meta.title.set(
-                            value,
-                            *conf.locales.first().unwrap_or(&i18n::Locale::default()),
-                        );
+                        let locale = conf.locales[0];
+                        if chart.meta.title.is_none(locale) {
+                            chart.meta.title.set(value, locale);
+                        }
                     }
                     "TITLEEN" => {
                         chart.meta.title.set(value, i18n::en_US);
@@ -87,7 +102,7 @@ where
                     }
                     "BPM" => {
                         if let Ok(value) = value.parse() {
-                            chart.meta.bpm = value;
+                            bpm = value;
                         }
                     }
                     "WAVE" => {
@@ -120,8 +135,8 @@ where
                         chart.meta.bgmovie = Some(value.to_string());
                     }
                     "COURSE" => {
-                        if let Some(difficulty) = tja::course::meta::Course::from_str(value) {
-                            course.meta.course = difficulty;
+                        if let Some(c) = tja::course::meta::Course::from_str(value) {
+                            course.meta.course = c;
                         }
                     }
                     "LEVEL" => {
@@ -160,7 +175,15 @@ where
                     "EXAM3" => {
                         course.meta.exam3 = tja::course::meta::Exam::from_str(value);
                     }
-                    // TODO: add #START
+                    "#START" => match value {
+                        "p1" => {
+                            events = &mut course.p1;
+                        }
+                        "p2" => {
+                            events = &mut course.p2;
+                        }
+                        _ => {}
+                    },
                     "#END" => {
                         use tja::course::meta::Course::*;
                         match course.meta.course {
@@ -186,11 +209,123 @@ where
                                 chart.tower_course = Some(std::mem::take(&mut course));
                             }
                         }
+                        events = &mut course.p1;
+                        measure = (4, 4); // TODO: define the default measure somewhere else
+                        bpm = 120.0; // TODO: define the default BPM somewhere else
+                        flag_barline = true;
                     }
-                    // TODO: add other commands
+                    "#MEASURE" => {
+                        let mut values = value.split('/');
+                        if let Some(numerator) = values.next() {
+                            if let Ok(numerator) = numerator.parse() {
+                                if let Some(denominator) = values.next() {
+                                    if let Ok(denominator) = denominator.parse() {
+                                        measure = (numerator, denominator);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    "#BPMCHANGE" => {
+                        if let Ok(value) = value.parse() {
+                            bpm = value;
+                        }
+                    }
+                    "#DELAY" => {
+                        if let Ok(value) = value.parse() {
+                            events.push(tja::course::Event {
+                                offset: value,
+                                event: tja::course::event::Type::DELAY,
+                            })
+                        }
+                    }
+                    "#SCROLL" => {
+                        if let Ok(value) = value.parse() {
+                            events.push(tja::course::Event {
+                                offset: 0.0,
+                                event: tja::course::event::Type::SCROLL(value),
+                            })
+                        }
+                    }
+                    "#GOGOSTART" => events.push(tja::course::Event {
+                        offset: 0.0,
+                        event: tja::course::event::Type::GOGOSTART,
+                    }),
+                    "#GOGOEND" => events.push(tja::course::Event {
+                        offset: 0.0,
+                        event: tja::course::event::Type::GOGOEND,
+                    }),
+                    "#BARLINEOFF" => {
+                        flag_barline = false;
+                    }
+                    "BARLINEON" => {
+                        flag_barline = true;
+                    }
+                    //"#BRANCHSTART" => {
+
+                    //}
+                    //"#N" => {
+
+                    //}
+                    //"#E" => {
+
+                    //}
+                    //"#M" => {
+
+                    //}
+                    //"#BRANCHEND" => {
+
+                    //}
+                    "#SECTION" => events.push(tja::course::Event {
+                        offset: 0.0,
+                        event: tja::course::event::Type::SECTION,
+                    }),
+                    "#LYRIC" => {
+                        if !value.is_empty() {
+                            events.push(tja::course::Event {
+                                offset: 0.0,
+                                event: tja::course::event::Type::LYRIC(value.to_string()),
+                            });
+                        }
+                    }
+                    "#LEVELHOLD" => events.push(tja::course::Event {
+                        offset: 0.0,
+                        event: tja::course::event::Type::LEVELHOLD,
+                    }),
+                    "#NEXTSONG" => {
+                        let mut values = value.split(',');
+                        if let Some(title) = values.next() {
+                            if let Some(subtitle) = values.next() {
+                                if let Some(genre) = values.next() {
+                                    if let Some(wave) = values.next() {
+                                        if let Some(scoreinit) = values.next() {
+                                            if let Ok(scoreinit) = scoreinit.parse() {
+                                                if let Some(scorediff) = values.next() {
+                                                    if let Ok(scorediff) = scorediff.parse() {
+                                                        events.push(tja::course::Event {
+                                                            offset: 0.0,
+                                                            event:
+                                                                tja::course::event::Type::NEXTSONG(
+                                                                    title.to_string(),
+                                                                    subtitle.to_string(),
+                                                                    genre.to_string(),
+                                                                    wave.to_string(),
+                                                                    scoreinit,
+                                                                    scorediff,
+                                                                ),
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     _ => {
                         if !key.is_empty() {
-                            println!("{:?}: {:?}", key, value);
+                            //println!("{:?}: {:?}", key, value);
                         }
                     }
                 }
@@ -207,7 +342,7 @@ where
                         }
                     }
                     ':' => {
-                        key = text.get(index_low..i).unwrap();
+                        key = &text[index_low..i];
                         index_low = i + 1;
                     }
                     '#' => {
@@ -216,19 +351,53 @@ where
                     }
                     ' ' => {
                         if flag_command {
-                            key = text.get(index_low..i).unwrap();
+                            key = &text[index_low..i];
                             index_low = i + 1;
                             flag_command = false;
                         }
                     }
                     // TODO: add notes and comma
+                    // don't forget the barline event at the end of the measure
                     _ => {}
                 }
             }
-            previous_character = character
+            if flag_eof {
+                return Some(chart);
+            }
+            previous_character = character;
         }
-        Some(chart)
-    } else {
-        None
     }
+    None
+}
+
+pub fn get_all_tja_paths(root: &str) -> Vec<std::path::PathBuf> {
+    let conf = crate::conf::Conf::default();
+    let mut paths = Vec::new();
+    let mut queue = std::collections::VecDeque::new();
+    queue.push_back(std::path::PathBuf::from(root));
+    while let Some(directory) = queue.pop_front() {
+        if let Ok(entires) = directory.read_dir() {
+            for entry in entires {
+                if let Ok(entry) = entry {
+                    if let Ok(filetype) = entry.file_type() {
+                        let path = entry.path();
+                        if filetype.is_dir() {
+                            queue.push_back(path);
+                        } else if filetype.is_file() {
+                            if let Some(extension) = path.extension() {
+                                if extension == "tja" {
+                                    println!(
+                                        "{}",
+                                        load_tja_from_path(&path, None, &conf, None).unwrap()
+                                    );
+                                    paths.push(path);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    paths
 }

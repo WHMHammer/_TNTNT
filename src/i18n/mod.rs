@@ -28,7 +28,7 @@ impl I18nString {
         }
     }
 
-    pub fn get(&self, locales: &Vec<Locale>) -> &str {
+    pub fn get(&self, locales: &[Locale]) -> &str {
         // locales in decreasing order of preference
         for locale in locales {
             if let Some(string) = match locale {
@@ -44,5 +44,13 @@ impl I18nString {
         }
         .as_deref()
         .unwrap_or("[text not found]")
+    }
+
+    pub fn is_none(&self, locale: Locale) -> bool {
+        match locale {
+            en_US => &self.en_US,
+            zh_CN => &self.zh_CN,
+        }
+        .is_none()
     }
 }
