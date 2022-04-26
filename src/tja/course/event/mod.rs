@@ -1,9 +1,7 @@
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
-pub enum BranchType {
-    r,
-    p,
-}
+pub mod branch;
+pub mod nextsong;
+pub use branch::Branches;
+pub use nextsong::Nextsong;
 
 #[derive(Debug)]
 pub enum EventType {
@@ -21,12 +19,14 @@ pub enum EventType {
     GOGOSTART,
     GOGOEND,
     BARLINE,
-    BRANCH(BranchType, f64, f64, Vec<Event>, Vec<Event>, Vec<Event>), // branch type, #E threshold, #M threshold, #N branch, #E branch, #M branch
+    BRANCH(Branches),
     SECTION,
     LYRIC(String),
     LEVELHOLD,
-    NEXTSONG(String, String, String, String, u32, u32), // title, subtitle, genre, wave, scoreinit, scorediff
+    NEXTSONG(Nextsong),
+    DEBUG(String),
 }
+pub use EventType::*;
 
 #[derive(Debug)]
 pub struct Event {

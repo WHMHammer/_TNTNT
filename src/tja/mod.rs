@@ -54,14 +54,15 @@ impl Chart {
             chart.meta.genre = genre.map(String::clone);
             let mut char_indices = text.char_indices();
             let mut i = 0;
+            let mut previous_character = ' ';
             let mut index_low = 0;
             let mut index_high = 0;
             let mut key = "";
             let mut course = Course::default();
             let mut events = &mut course.p1;
+            let mut course_events_ptr: *mut Vec<course::Event> = std::ptr::null_mut();
             let mut measure: (u8, u8) = (4, 4); // TODO: define the default measure somewhere else
             let mut bpm = 120.0; // TODO: define the default BPM somewhere else
-            let mut previous_character = ' ';
             let mut flag_eof = false;
             let mut flag_comment = false;
             let mut flag_command = false;
@@ -225,6 +226,7 @@ impl Chart {
                                 }
                             }
                             events = &mut course.p1;
+                            course_events_ptr = std::ptr::null_mut();
                             measure = (4, 4); // TODO: define the default measure somewhere else
                             bpm = 120.0; // TODO: define the default BPM somewhere else
                             flag_barline = true;
@@ -250,7 +252,7 @@ impl Chart {
                             if let Ok(offset) = value.parse() {
                                 events.push(course::Event {
                                     offset,
-                                    event_type: course::event::EventType::DELAY,
+                                    event_type: course::event::DELAY,
                                 })
                             }
                         }
@@ -258,89 +260,131 @@ impl Chart {
                             if let Ok(scroll) = value.parse() {
                                 events.push(course::Event {
                                     offset: 0.0,
-                                    event_type: course::event::EventType::SCROLL(scroll),
+                                    event_type: course::event::SCROLL(scroll),
                                 })
                             }
                         }
                         "#GOGOSTART" => events.push(course::Event {
                             offset: 0.0,
-                            event_type: course::event::EventType::GOGOSTART,
+                            event_type: course::event::GOGOSTART,
                         }),
                         "#GOGOEND" => events.push(course::Event {
                             offset: 0.0,
-                            event_type: course::event::EventType::GOGOEND,
+                            event_type: course::event::GOGOEND,
                         }),
                         "#BARLINEOFF" => {
                             flag_barline = false;
                         }
-                        "BARLINEON" => {
+                        "#BARLINEON" => {
                             flag_barline = true;
                         }
-                        //"#BRANCHSTART" => {
-
-                        //}
-                        //"#N" => {
-
-                        //}
-                        //"#E" => {
-
-                        //}
-                        //"#M" => {
-
-                        //}
-                        //"#BRANCHEND" => {
-
-                        //}
-                        "#SECTION" => events.push(course::Event {
-                            offset: 0.0,
-                            event_type: course::event::EventType::SECTION,
-                        }),
-                        "#LYRIC" => {
-                            if !value.is_empty() {
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::EventType::LYRIC(value.to_string()),
-                                });
-                            }
-                        }
-                        "#LEVELHOLD" => events.push(course::Event {
-                            offset: 0.0,
-                            event_type: course::event::EventType::LEVELHOLD,
-                        }),
-                        "#NEXTSONG" => {
-                            let mut values = value.split(',');
-                            if let Some(title) = values.next() {
-                                if let Some(subtitle) = values.next() {
-                                    if let Some(genre) = values.next() {
-                                        if let Some(wave) = values.next() {
-                                            if let Some(scoreinit) = values.next() {
-                                                if let Ok(scoreinit) = scoreinit.parse() {
-                                                    if let Some(scorediff) = values.next() {
-                                                        if let Ok(scorediff) = scorediff.parse() {
-                                                            events.push(course::Event {
-                                                                offset: 0.0,
-                                                                event_type:
-                                                                    course::event::EventType::NEXTSONG(
-                                                                        title.to_string(),
-                                                                        subtitle.to_string(),
-                                                                        genre.to_string(),
-                                                                        wave.to_string(),
-                                                                        scoreinit,
-                                                                        scorediff,
-                                                                    ),
-                                                            });
-                                                        }
-                                                    }
-                                                }
-                                            }
+                        "#BRANCHSTART" => {
+                            if let Some(mut branches) = course::event::Branches::from_str(value) {
+                                unsafe {
+                                    if let Some(course_events) = course_events_ptr.as_mut() {
+                                        course_events.push(course::Event {
+                                            offset: 0.0,
+                                            event_type: course::event::BRANCH(branches),
+                                        });
+                                        if let course::event::BRANCH(branches) =
+                                            &mut course_events.last_mut().unwrap().event_type
+                                        {
+                                            events = &mut branches.n;
+                                        } else {
+                                            unreachable!()
+                                        }
+                                    } else {
+                                        events.push(course::Event {
+                                            offset: 0.0,
+                                            event_type: course::event::BRANCH(branches),
+                                        });
+                                        course_events_ptr = &mut *events;
+                                        if let course::event::BRANCH(branches) =
+                                            &mut course_events_ptr
+                                                .as_mut()
+                                                .unwrap()
+                                                .last_mut()
+                                                .unwrap()
+                                                .event_type
+                                        {
+                                            events = &mut branches.n;
+                                        } else {
+                                            unreachable!()
                                         }
                                     }
                                 }
                             }
                         }
+                        "#N" => unsafe {
+                            if let Some(course_events) = course_events_ptr.as_mut() {
+                                if let course::event::BRANCH(branches) =
+                                    &mut course_events.last_mut().unwrap().event_type
+                                {
+                                    events = &mut branches.n;
+                                } else {
+                                    unreachable!();
+                                }
+                            }
+                        },
+                        "#E" => unsafe {
+                            if let Some(course_events) = course_events_ptr.as_mut() {
+                                if let course::event::BRANCH(branches) =
+                                    &mut course_events.last_mut().unwrap().event_type
+                                {
+                                    events = &mut branches.e;
+                                } else {
+                                    unreachable!();
+                                }
+                            }
+                        },
+                        "#M" => unsafe {
+                            if let Some(course_events) = course_events_ptr.as_mut() {
+                                if let course::event::BRANCH(branches) =
+                                    &mut course_events.last_mut().unwrap().event_type
+                                {
+                                    events = &mut branches.m;
+                                } else {
+                                    unreachable!();
+                                }
+                            }
+                        },
+                        "#BRANCHEND" => unsafe {
+                            if let Some(course_events) = course_events_ptr.as_mut() {
+                                events = course_events;
+                                course_events_ptr = std::ptr::null_mut();
+                            }
+                        },
+                        "#SECTION" => events.push(course::Event {
+                            offset: 0.0,
+                            event_type: course::event::SECTION,
+                        }),
+                        "#LYRIC" => {
+                            if !value.is_empty() {
+                                events.push(course::Event {
+                                    offset: 0.0,
+                                    event_type: course::event::LYRIC(value.to_string()),
+                                });
+                            }
+                        }
+                        "#LEVELHOLD" => events.push(course::Event {
+                            offset: 0.0,
+                            event_type: course::event::LEVELHOLD,
+                        }),
+                        "#NEXTSONG" => {
+                            if let Some(nextsong) = course::event::Nextsong::from_str(value) {
+                                events.push(course::Event {
+                                    offset: 0.0,
+                                    event_type: course::event::NEXTSONG(nextsong),
+                                })
+                            }
+                        }
                         _ => {
                             if !key.is_empty() {
-                                //println!("{:?}: {:?}", key, value);
+                                println!("{:?}: {:?}", key, value);
+                                /*events.push(course::Event {
+                                    offset: 0.0,
+                                    event_type: course::event::EventType::DEBUG(key.to_string()),
+                                });*/
                             }
                         }
                     }
