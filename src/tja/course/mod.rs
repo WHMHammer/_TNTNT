@@ -1,7 +1,7 @@
-pub mod branch;
 pub mod event;
 pub mod meta;
 pub use event::Event;
+pub use meta::Meta;
 
 #[derive(Debug, Default)]
 pub struct Course {

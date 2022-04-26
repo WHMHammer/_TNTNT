@@ -1,7 +1,12 @@
-use super::branch;
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub enum BranchType {
+    r,
+    p,
+}
 
 #[derive(Debug)]
-pub enum Type {
+pub enum EventType {
     Don,      // 1
     Ka,       // 2
     DON,      // 3
@@ -16,7 +21,7 @@ pub enum Type {
     GOGOSTART,
     GOGOEND,
     BARLINE,
-    BRANCH(branch::Type, f64, f64, Vec<Event>, Vec<Event>, Vec<Event>), // branch type, #E threshold, #M threshold, #N branch, #E branch, #M branch
+    BRANCH(BranchType, f64, f64, Vec<Event>, Vec<Event>, Vec<Event>), // branch type, #E threshold, #M threshold, #N branch, #E branch, #M branch
     SECTION,
     LYRIC(String),
     LEVELHOLD,
@@ -26,5 +31,5 @@ pub enum Type {
 #[derive(Debug)]
 pub struct Event {
     pub offset: f64, // delay before the event takes place
-    pub event: Type,
+    pub event_type: EventType,
 }
