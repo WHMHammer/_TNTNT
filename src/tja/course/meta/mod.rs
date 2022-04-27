@@ -22,8 +22,8 @@ impl Default for Meta {
             course: Course::default(),
             level: 0,
             balloon: Vec::new(),
-            scoreinit: 0,
-            scorediff: 100,
+            scoreinit: 0,   // TODO: figure out the true default value
+            scorediff: 100, // TODO: figure out the true default value
             style: Style::default(),
             exam1: None,
             exam2: None,

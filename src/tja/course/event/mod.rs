@@ -5,6 +5,7 @@ pub use nextsong::Nextsong;
 
 #[derive(Debug)]
 pub enum EventType {
+    Empty,    // 0
     Don,      // 1
     Ka,       // 2
     DON,      // 3
@@ -14,17 +15,20 @@ pub enum EventType {
     Balloon,  // 7
     End,      // 8
     BALLOON,  // 9
-    DELAY,
+    MEASURE(u8, u8),
+    BPMCHANGE(f64),
+    DELAY(f64),
     SCROLL(f64),
     GOGOSTART,
     GOGOEND,
+    BARLINEOFF,
+    BARLINEON,
     BARLINE,
     BRANCH(Branches),
     SECTION,
     LYRIC(String),
     LEVELHOLD,
     NEXTSONG(Nextsong),
-    DEBUG(String),
 }
 pub use EventType::*;
 

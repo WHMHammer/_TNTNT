@@ -11,12 +11,21 @@
 ## 目录
 
 - [动机](#动机)
+- [构建](#构建)
 - [路线图](#路线图)
     - [第零阶段：解析](#stage-0)**（目前进度）**
     - [第一阶段：图形化谱面](#stage-1)
     - [第二阶段：演奏](#stage-2)
     - [第三阶段：皮肤](#stage-3)
     - [第四阶段：在线多人模式](#stage-4)
+
+## 构建
+
+安装以下依赖：
+- `pkg-config`
+- `libasound2-dev`（Ubuntu）或`alsa-lib-devel`（Fedora）
+
+然后运行`cargo build`。
 
 ## 动机
 
@@ -27,7 +36,8 @@
 - 静态类型
 - 强类型
 - 强大的枚举类和模式匹配
-- 强大的编译期类型推导
+- 强大的编译期检查
+- 无未定义行为
 - 内存安全
 - 线程安全
 
@@ -58,27 +68,27 @@
         - [x] EXAM2
         - [x] EXAM3
     - 音符
-        - [ ] 0-9
+        - [x] 0-9
     - 指令
-        - [ ] #START
+        - [x] #START
         - [x] #END
-        - [ ] #MEASURE
-        - [ ] #BPMCHANGE
-        - [ ] #DELAY
-        - [ ] #SCROLL
-        - [ ] #GOGOSTART
-        - [ ] #GOGOEND
-        - [ ] #BARLINEOFF
-        - [ ] #BARLINEON
-        - [ ] #BRANCHSTART
-        - [ ] #N
-        - [ ] #E
-        - [ ] #M
-        - [ ] #BRANCHEND
-        - [ ] #SECTION
-        - [ ] #LYRIC
-        - [ ] #LEVELHOLD
-        - [ ] #NEXTSONG
+        - [x] #MEASURE
+        - [x] #BPMCHANGE
+        - [x] #DELAY
+        - [x] #SCROLL
+        - [x] #GOGOSTART
+        - [x] #GOGOEND
+        - [x] #BARLINEOFF
+        - [x] #BARLINEON
+        - [x] #BRANCHSTART
+        - [x] #N
+        - [x] #E
+        - [x] #M
+        - [x] #BRANCHEND
+        - [x] #SECTION
+        - [x] #LYRIC
+        - [x] #LEVELHOLD
+        - [x] #NEXTSONG
 
 - <span id="stage-1">第一阶段：图形化谱面（v1.x）</span>
 

@@ -3,6 +3,7 @@ pub mod meta;
 use crate::i18n;
 pub use course::Course;
 pub use meta::Meta;
+mod parse;
 
 #[derive(Debug, Default)]
 pub struct Chart {
@@ -17,7 +18,7 @@ pub struct Chart {
 }
 
 impl Chart {
-    pub fn from_path<P>(
+    pub fn parse_from_path<P>(
         path: P,
         encoding: Option<&'static encoding_rs::Encoding>,
         conf: &crate::conf::Conf,
@@ -61,12 +62,12 @@ impl Chart {
             let mut course = Course::default();
             let mut events = &mut course.p1;
             let mut course_events_ptr: *mut Vec<course::Event> = std::ptr::null_mut();
-            let mut measure: (u8, u8) = (4, 4); // TODO: define the default measure somewhere else
-            let mut bpm = 120.0; // TODO: define the default BPM somewhere else
+            let mut measure = std::collections::VecDeque::new();
             let mut flag_eof = false;
-            let mut flag_comment = false;
-            let mut flag_command = false;
-            let mut flag_barline = true;
+            let mut state = parse::State::Meta;
+            let mut context = parse::Context::default();
+            let mut course_context = context;
+            let mut branchstart_context = course_context;
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
                     i = index;
@@ -79,7 +80,7 @@ impl Chart {
                 };
                 if character == '\n' {
                     let mut value = "";
-                    if !flag_comment {
+                    if state != parse::State::Comment {
                         if previous_character == '\r' {
                             index_high = i - 1;
                         } else {
@@ -117,8 +118,9 @@ impl Chart {
                             chart.meta.subtitle.set(value, i18n::zh_CN);
                         }
                         "BPM" => {
-                            if let Ok(value) = value.parse() {
-                                bpm = value;
+                            if let Ok(bpm) = value.parse() {
+                                context.bpm = bpm;
+                                course_context.bpm = bpm;
                             }
                         }
                         "WAVE" => {
@@ -192,15 +194,25 @@ impl Chart {
                             course.meta.exam3 = course::meta::Exam::from_str(value);
                         }
                         "#START" => match value {
+                            // TODO: fix the issue where the initial barline is inserted regardless of whether there is a #BARLINEOFF before the first note
                             "p1" => {
                                 events = &mut course.p1;
+                                events.push(course::Event {
+                                    offset: 0.0,
+                                    event_type: course::event::BARLINE,
+                                });
                             }
                             "p2" => {
                                 events = &mut course.p2;
+                                events.push(course::Event {
+                                    offset: 0.0,
+                                    event_type: course::event::BARLINE,
+                                });
                             }
                             _ => {}
                         },
                         "#END" => {
+                            parse::move_events(&mut measure, events, &mut course_context);
                             use course::meta::Course::*;
                             match course.meta.course {
                                 Easy => {
@@ -227,9 +239,7 @@ impl Chart {
                             }
                             events = &mut course.p1;
                             course_events_ptr = std::ptr::null_mut();
-                            measure = (4, 4); // TODO: define the default measure somewhere else
-                            bpm = 120.0; // TODO: define the default BPM somewhere else
-                            flag_barline = true;
+                            course_context = context;
                         }
                         "#MEASURE" => {
                             let mut values = value.split('/');
@@ -237,49 +247,37 @@ impl Chart {
                                 if let Ok(numerator) = numerator.parse() {
                                     if let Some(denominator) = values.next() {
                                         if let Ok(denominator) = denominator.parse() {
-                                            measure = (numerator, denominator);
+                                            measure.push_back(course::event::MEASURE(
+                                                numerator,
+                                                denominator,
+                                            ));
                                         }
                                     }
                                 }
                             }
                         }
                         "#BPMCHANGE" => {
-                            if let Ok(b) = value.parse() {
-                                bpm = b;
+                            if let Ok(bpm) = value.parse() {
+                                measure.push_back(course::event::BPMCHANGE(bpm));
                             }
                         }
                         "#DELAY" => {
-                            if let Ok(offset) = value.parse() {
-                                events.push(course::Event {
-                                    offset,
-                                    event_type: course::event::DELAY,
-                                })
+                            if let Ok(delay) = value.parse() {
+                                measure.push_back(course::event::DELAY(delay))
                             }
                         }
                         "#SCROLL" => {
                             if let Ok(scroll) = value.parse() {
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::SCROLL(scroll),
-                                })
+                                measure.push_back(course::event::SCROLL(scroll))
                             }
                         }
-                        "#GOGOSTART" => events.push(course::Event {
-                            offset: 0.0,
-                            event_type: course::event::GOGOSTART,
-                        }),
-                        "#GOGOEND" => events.push(course::Event {
-                            offset: 0.0,
-                            event_type: course::event::GOGOEND,
-                        }),
-                        "#BARLINEOFF" => {
-                            flag_barline = false;
-                        }
-                        "#BARLINEON" => {
-                            flag_barline = true;
-                        }
+                        "#GOGOSTART" => measure.push_back(course::event::GOGOSTART),
+                        "#GOGOEND" => measure.push_back(course::event::GOGOEND),
+                        "#BARLINEOFF" => measure.push_back(course::event::BARLINEOFF),
+                        "#BARLINEON" => measure.push_back(course::event::BARLINEON),
                         "#BRANCHSTART" => {
-                            if let Some(mut branches) = course::event::Branches::from_str(value) {
+                            if let Some(branches) = course::event::Branches::from_str(value) {
+                                parse::move_events(&mut measure, events, &mut context);
                                 unsafe {
                                     if let Some(course_events) = course_events_ptr.as_mut() {
                                         course_events.push(course::Event {
@@ -313,10 +311,13 @@ impl Chart {
                                         }
                                     }
                                 }
+                                branchstart_context = course_context;
                             }
                         }
                         "#N" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
+                                course_context = branchstart_context;
+                                parse::move_events(&mut measure, events, &mut context);
                                 if let course::event::BRANCH(branches) =
                                     &mut course_events.last_mut().unwrap().event_type
                                 {
@@ -328,6 +329,8 @@ impl Chart {
                         },
                         "#E" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
+                                course_context = branchstart_context;
+                                parse::move_events(&mut measure, events, &mut context);
                                 if let course::event::BRANCH(branches) =
                                     &mut course_events.last_mut().unwrap().event_type
                                 {
@@ -339,6 +342,8 @@ impl Chart {
                         },
                         "#M" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
+                                course_context = branchstart_context;
+                                parse::move_events(&mut measure, events, &mut context);
                                 if let course::event::BRANCH(branches) =
                                     &mut course_events.last_mut().unwrap().event_type
                                 {
@@ -350,54 +355,38 @@ impl Chart {
                         },
                         "#BRANCHEND" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
+                                parse::move_events(&mut measure, events, &mut context);
                                 events = course_events;
                                 course_events_ptr = std::ptr::null_mut();
                             }
                         },
-                        "#SECTION" => events.push(course::Event {
-                            offset: 0.0,
-                            event_type: course::event::SECTION,
-                        }),
+                        "#SECTION" => measure.push_back(course::event::SECTION),
                         "#LYRIC" => {
                             if !value.is_empty() {
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::LYRIC(value.to_string()),
-                                });
+                                measure.push_back(course::event::LYRIC(value.to_string()));
                             }
                         }
-                        "#LEVELHOLD" => events.push(course::Event {
-                            offset: 0.0,
-                            event_type: course::event::LEVELHOLD,
-                        }),
+                        "#LEVELHOLD" => measure.push_back(course::event::LEVELHOLD),
                         "#NEXTSONG" => {
                             if let Some(nextsong) = course::event::Nextsong::from_str(value) {
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::NEXTSONG(nextsong),
-                                })
+                                measure.push_back(course::event::NEXTSONG(nextsong))
                             }
                         }
                         _ => {
                             if !key.is_empty() {
-                                println!("{:?}: {:?}", key, value);
-                                /*events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::EventType::DEBUG(key.to_string()),
-                                });*/
+                                println!("{}", key);
                             }
                         }
                     }
                     index_low = i + 1;
-                    flag_comment = false;
+                    state = parse::State::Meta;
                     key = "";
-                    flag_command = false;
-                } else if !flag_comment {
+                } else if state != parse::State::Comment {
                     match character {
                         '/' => {
                             if previous_character == '/' {
                                 index_high = i - 1;
-                                flag_comment = true;
+                                state = parse::State::Comment;
                             }
                         }
                         ':' => {
@@ -406,17 +395,41 @@ impl Chart {
                         }
                         '#' => {
                             index_low = i;
-                            flag_command = true;
+                            state = parse::State::CommandKey;
                         }
                         ' ' => {
-                            if flag_command {
+                            if state == parse::State::CommandKey {
                                 key = &text[index_low..i];
                                 index_low = i + 1;
-                                flag_command = false;
+                                state = parse::State::CommandValue;
                             }
                         }
-                        // TODO: add notes and comma
-                        // don't forget the barline event at the end of the measure
+                        '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                            if previous_character == '\n' {
+                                state = parse::State::Measure;
+                            }
+                            if state == parse::State::Measure {
+                                measure.push_back(match character {
+                                    '0' => course::event::Empty,
+                                    '1' => course::event::Don,
+                                    '2' => course::event::Ka,
+                                    '3' => course::event::DON,
+                                    '4' => course::event::KA,
+                                    '5' => course::event::Drumroll,
+                                    '6' => course::event::DRUMROLL,
+                                    '7' => course::event::Balloon,
+                                    '8' => course::event::End,
+                                    '9' => course::event::BALLOON,
+                                    _ => unreachable!(),
+                                });
+                                context.measure_notes_count += 1;
+                            }
+                        }
+                        ',' => {
+                            if state == parse::State::Measure {
+                                parse::move_events(&mut measure, events, &mut context);
+                            }
+                        }
                         _ => {}
                     }
                 }

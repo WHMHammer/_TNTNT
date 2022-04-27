@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Motivation](#motivation)
+- [Build](#build)
 - [Road Map](#road-map)
     - [Stage 0: Parsing (v0.x)](#stage-0) **(I am here)**
     - [Stage 1: Visualizing](#stage-1)
@@ -27,9 +28,18 @@ Why `Rust`? `Rust` is/has:
 - statically typed
 - strongly typed
 - powerful `enum` and `match`
-- powerful compile-time type inference
+- powerful compile-time checking
+- no undefined behavior
 - memory-safe
 - thread-safe
+
+## Build
+
+Install the following dependency:
+- `pkg-config`
+- `libasound2-dev` (Ubuntu) or `alsa-lib-devel` (Fedora)
+
+and then run `cargo build`.
 
 ## Road Map
 
@@ -51,34 +61,34 @@ Why `Rust`? `Rust` is/has:
         - [x] COURSE
         - [x] LEVEL
         - [x] BALLOON
-        - [x] SCOREINIT **(still need to find out the correct default value)**
-        - [x] SCOREDIFF **(still need to find out the correct default value)**
+        - [x] SCOREINIT
+        - [x] SCOREDIFF
         - [x] STYLE
         - [x] EXAM1
         - [x] EXAM2
         - [x] EXAM3
     - Notes
-        - [ ] 0-9
+        - [x] 0-9
     - Commands
-        - [ ] #START
+        - [x] #START
         - [x] #END
-        - [ ] #MEASURE
-        - [ ] #BPMCHANGE
-        - [ ] #DELAY
-        - [ ] #SCROLL
-        - [ ] #GOGOSTART
-        - [ ] #GOGOEND
-        - [ ] #BARLINEOFF
-        - [ ] #BARLINEON
-        - [ ] #BRANCHSTART
-        - [ ] #N
-        - [ ] #E
-        - [ ] #M
-        - [ ] #BRANCHEND
-        - [ ] #SECTION
-        - [ ] #LYRIC
-        - [ ] #LEVELHOLD
-        - [ ] #NEXTSONG
+        - [x] #MEASURE
+        - [x] #BPMCHANGE
+        - [x] #DELAY
+        - [x] #SCROLL
+        - [x] #GOGOSTART
+        - [x] #GOGOEND
+        - [x] #BARLINEOFF
+        - [x] #BARLINEON
+        - [x] #BRANCHSTART
+        - [x] #N
+        - [x] #E
+        - [x] #M
+        - [x] #BRANCHEND
+        - [x] #SECTION
+        - [x] #LYRIC
+        - [x] #LEVELHOLD
+        - [x] #NEXTSONG
 
 - <span id="stage-1">Stage 1: Visualizing (v1.x)</span>
 

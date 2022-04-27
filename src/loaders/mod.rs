@@ -1,4 +1,3 @@
-use crate::i18n;
 use crate::tja;
 
 pub fn get_all_tja_paths(root: &str) -> Vec<std::path::PathBuf> {
@@ -19,7 +18,8 @@ pub fn get_all_tja_paths(root: &str) -> Vec<std::path::PathBuf> {
                                 if extension == "tja" {
                                     println!(
                                         "{}",
-                                        tja::Chart::from_path(&path, None, &conf, None).unwrap()
+                                        tja::Chart::parse_from_path(&path, None, &conf, None)
+                                            .unwrap()
                                     );
                                     paths.push(path);
                                 }
