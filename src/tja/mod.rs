@@ -51,29 +51,29 @@ impl Chart {
                 return None;
             }
             let text = text.unwrap();
-            let mut chart = Self::default();
-            chart.meta.genre = genre.map(String::clone);
+            let mut chart = Self::default(); // the chart to be returned
+            chart.meta.genre = genre.map(String::clone); // some tja files don't record their genres, but they are grouped in different folders
             let mut char_indices = text.char_indices();
             let mut i = 0;
             let mut previous_character = ' ';
             let mut index_low = 0;
             let mut index_high = 0;
             let mut key = "";
-            let mut course = Course::default();
-            let mut events = &mut course.p1;
-            let mut course_events_ptr: *mut Vec<course::Event> = std::ptr::null_mut();
-            let mut measure = std::collections::VecDeque::new();
-            let mut flag_eof = false;
-            let mut state = parse::State::Meta;
-            let mut context = parse::Context::default();
-            let mut course_context = context;
-            let mut branchstart_context = course_context;
+            let mut course = Course::default(); // the current course working on; moved to the chart at the #END
+            let mut events = &mut course.p1; // the current event buffer working on; switched at the #START [p1|p2]
+            let mut course_events_ptr: *mut Vec<course::Event> = std::ptr::null_mut(); // events will point to the event buffer when #BRANCHSTART; this ptr records the course events to be written back at #BRANCHEND
+            let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to the events at the end of the measures ("," in tja)
+            let mut flag_eof = false; // flag: end of file
+            let mut state = parse::State::MetaKey; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
+            let mut context = parse::Context::default(); // bpm, etc.
+            let mut chart_context = context; // the initial context of the chart; cloned back to context at the #END
+            let mut branchstart_context = chart_context; // the context at #BRANCHSTART; cloned back to context when start parsing another branch
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
                     i = index;
                     character
                 } else {
-                    // the file may not have an ending line break
+                    // the file may not have an ending line break, in which case we simulate one
                     flag_eof = true;
                     i += 1;
                     '\n'
@@ -88,6 +88,7 @@ impl Chart {
                         }
                     }
                     if key.is_empty() {
+                        // always store commands without parameters in key
                         key = text[index_low..index_high].trim();
                     } else {
                         value = text[index_low..index_high].trim();
@@ -120,7 +121,7 @@ impl Chart {
                         "BPM" => {
                             if let Ok(bpm) = value.parse() {
                                 context.bpm = bpm;
-                                course_context.bpm = bpm;
+                                chart_context.bpm = bpm;
                             }
                         }
                         "WAVE" => {
@@ -213,7 +214,7 @@ impl Chart {
                         },
                         "#END" => {
                             if !measure.is_empty() {
-                                parse::move_events(&mut measure, events, &mut course_context);
+                                parse::move_events(&mut measure, events, &mut context);
                             }
                             use course::meta::Course::*;
                             match course.meta.course {
@@ -241,7 +242,7 @@ impl Chart {
                             }
                             events = &mut course.p1;
                             course_events_ptr = std::ptr::null_mut();
-                            course_context = context;
+                            context = chart_context;
                         }
                         "#MEASURE" => {
                             let mut values = value.split('/');
@@ -281,7 +282,9 @@ impl Chart {
                             if let Some(branches) = course::event::Branches::from_str(value) {
                                 parse::move_events(&mut measure, events, &mut context);
                                 unsafe {
+                                    // cannot rewrite with safe code because course_events is (indirectly) owned by events, so we can't have &mut for both
                                     if let Some(course_events) = course_events_ptr.as_mut() {
+                                        // handles the case where this #BRANCHSTART directly follows the previous one
                                         course_events.push(course::Event {
                                             offset: 0.0,
                                             event_type: course::event::BRANCH(branches),
@@ -294,6 +297,7 @@ impl Chart {
                                             unreachable!()
                                         }
                                     } else {
+                                        // handles the case where this #BRANCHSTART does not directly follow another one
                                         events.push(course::Event {
                                             offset: 0.0,
                                             event_type: course::event::BRANCH(branches),
@@ -313,43 +317,22 @@ impl Chart {
                                         }
                                     }
                                 }
-                                branchstart_context = course_context;
+                                branchstart_context = context;
                             }
                         }
-                        "#N" => unsafe {
+                        "#N" | "#E" | "#M" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
-                                course_context = branchstart_context;
+                                context = branchstart_context;
                                 parse::move_events(&mut measure, events, &mut context);
                                 if let course::event::BRANCH(branches) =
                                     &mut course_events.last_mut().unwrap().event_type
                                 {
-                                    events = &mut branches.n;
-                                } else {
-                                    unreachable!();
-                                }
-                            }
-                        },
-                        "#E" => unsafe {
-                            if let Some(course_events) = course_events_ptr.as_mut() {
-                                course_context = branchstart_context;
-                                parse::move_events(&mut measure, events, &mut context);
-                                if let course::event::BRANCH(branches) =
-                                    &mut course_events.last_mut().unwrap().event_type
-                                {
-                                    events = &mut branches.e;
-                                } else {
-                                    unreachable!();
-                                }
-                            }
-                        },
-                        "#M" => unsafe {
-                            if let Some(course_events) = course_events_ptr.as_mut() {
-                                course_context = branchstart_context;
-                                parse::move_events(&mut measure, events, &mut context);
-                                if let course::event::BRANCH(branches) =
-                                    &mut course_events.last_mut().unwrap().event_type
-                                {
-                                    events = &mut branches.m;
+                                    events = match key {
+                                        "#N" => &mut branches.n,
+                                        "#E" => &mut branches.e,
+                                        "#M" => &mut branches.m,
+                                        _ => unreachable!(),
+                                    };
                                 } else {
                                     unreachable!();
                                 }
@@ -375,27 +358,32 @@ impl Chart {
                             }
                         }
                         _ => {
-                            if !key.is_empty() {
-                                //println!("{}", key);
-                            }
+                            /*if !key.is_empty() {
+                                println!("{}", key);
+                            }*/
                         }
                     }
                     index_low = i + 1;
-                    state = parse::State::Meta;
+                    state = parse::State::MetaKey;
                     key = "";
                 } else if state != parse::State::Comment {
                     match character {
                         '/' => {
+                            // change of line
                             if previous_character == '/' {
                                 index_high = i - 1;
                                 state = parse::State::Comment;
                             }
                         }
                         ':' => {
-                            key = &text[index_low..i];
-                            index_low = i + 1;
+                            if state == parse::State::MetaKey {
+                                key = &text[index_low..i];
+                                index_low = i + 1;
+                                state = parse::State::MetaValue;
+                            }
                         }
                         '#' => {
+                            // if a line starts with "#," it records a command
                             index_low = i;
                             state = parse::State::CommandKey;
                         }
@@ -407,6 +395,7 @@ impl Chart {
                             }
                         }
                         '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                            // if a line starts with a number, it records some notes
                             if previous_character == '\n' {
                                 state = parse::State::Measure;
                             }
@@ -432,6 +421,7 @@ impl Chart {
                                 parse::move_events(&mut measure, events, &mut context);
                             }
                         }
+                        // TODO: parse the charts with indentations correctly
                         _ => {}
                     }
                 }

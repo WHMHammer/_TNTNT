@@ -1,7 +1,8 @@
 #[derive(PartialEq)]
 pub enum State {
     Comment,
-    Meta,
+    MetaKey,
+    MetaValue,
     CommandKey,
     CommandValue,
     Measure,
@@ -9,7 +10,7 @@ pub enum State {
 
 #[derive(Clone, Copy)]
 pub struct Context {
-    pub measure: (u8, u8), // numerator, denominator
+    pub measure: (u8, u8), // numerator, denominator (#MEASURE numerator,denominator)
     pub bpm: f64,
     pub flag_barline: bool,
     pub measure_notes_count: u8,

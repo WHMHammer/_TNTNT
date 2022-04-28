@@ -1,6 +1,6 @@
 [package]
 name = "tntnt"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["WHMHammer <whmhammer@gmail.com>"]
 edition = "2021"
 readme = "README.md"
