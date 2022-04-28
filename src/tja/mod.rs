@@ -194,7 +194,7 @@ impl Chart {
                             course.meta.exam3 = course::meta::Exam::from_str(value);
                         }
                         "#START" => match value {
-                            // TODO: fix the issue where the initial barline is inserted regardless of whether there is a #BARLINEOFF before the first note
+                            // TODO: fix the issue that the initial barline is inserted regardless of whether there is a #BARLINEOFF before the first note
                             "p1" => {
                                 events = &mut course.p1;
                                 events.push(course::Event {
@@ -212,7 +212,9 @@ impl Chart {
                             _ => {}
                         },
                         "#END" => {
-                            parse::move_events(&mut measure, events, &mut course_context);
+                            if !measure.is_empty() {
+                                parse::move_events(&mut measure, events, &mut course_context);
+                            }
                             use course::meta::Course::*;
                             match course.meta.course {
                                 Easy => {
@@ -374,7 +376,7 @@ impl Chart {
                         }
                         _ => {
                             if !key.is_empty() {
-                                println!("{}", key);
+                                //println!("{}", key);
                             }
                         }
                     }
