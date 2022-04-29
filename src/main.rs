@@ -6,6 +6,7 @@ mod tja;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
+    // TODO: test branching
     let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
     //let tja_path = std::path::Path::new("D:\\Gaming\\Taiko\\Official Songs 20220423\\01 Pop\\Natsu Matsuri\\Natsu Matsuri -New Audio-.tja");
 
@@ -61,6 +62,5 @@ fn main() {
         }
         println!("{:?}", event_type);
     }
-    println!("{:#?}", chart);
     std::thread::sleep(std::time::Duration::from_secs(15));
 }
