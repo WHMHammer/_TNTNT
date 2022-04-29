@@ -1,5 +1,6 @@
 pub mod course;
 pub mod meta;
+
 use crate::i18n;
 pub use course::Course;
 pub use meta::Meta;
@@ -60,7 +61,7 @@ impl Chart {
             let mut index_high = 0;
             let mut key = "";
             let mut course = Course::default(); // the current course working on; moved to the chart at the #END
-            let mut events = &mut course.p1; // the current event buffer working on; switched at the #START [p1|p2]
+            let mut events = &mut course.p0; // the current event buffer working on; switched at the #START [p1|p2]
             let mut course_events_ptr: *mut Vec<course::Event> = std::ptr::null_mut(); // events will point to the event buffer when #BRANCHSTART; this ptr records the course events to be written back at #BRANCHEND
             let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to the events at the end of the measures ("," in tja)
             let mut flag_eof = false; // flag: end of file
@@ -210,12 +211,27 @@ impl Chart {
                                     event_type: course::event::BARLINE,
                                 });
                             }
-                            _ => {}
+                            _ => {
+                                events = &mut course.p0;
+                                events.push(course::Event {
+                                    offset: 0.0,
+                                    event_type: course::event::BARLINE,
+                                });
+                            }
                         },
                         "#END" => {
-                            if !measure.is_empty() {
-                                parse::move_events(&mut measure, events, &mut context);
-                            }
+                            // TODO: handle STYLE:Double correctly
+                            parse::move_events(&mut measure, events, &mut context);
+                            /*{
+                                println!("{:?}", course.meta.course);
+                                use std::io::Write;
+                                let mut path = Vec::new();
+                                write!(&mut path, "{:?}.out", course.meta.course).unwrap();
+                                let mut file =
+                                    std::fs::File::create(String::from_utf8(path).unwrap())
+                                        .unwrap();
+                                write!(&mut file, "{:#?}", course);
+                            }*/
                             use course::meta::Course::*;
                             match course.meta.course {
                                 Easy => {
@@ -240,7 +256,7 @@ impl Chart {
                                     chart.tower_course = Some(std::mem::take(&mut course));
                                 }
                             }
-                            events = &mut course.p1;
+                            events = &mut course.p0;
                             course_events_ptr = std::ptr::null_mut();
                             context = chart_context;
                         }
@@ -286,7 +302,7 @@ impl Chart {
                                     if let Some(course_events) = course_events_ptr.as_mut() {
                                         // handles the case where this #BRANCHSTART directly follows the previous one
                                         course_events.push(course::Event {
-                                            offset: 0.0,
+                                            offset: context.offset,
                                             event_type: course::event::BRANCH(branches),
                                         });
                                         if let course::event::BRANCH(branches) =
@@ -299,7 +315,7 @@ impl Chart {
                                     } else {
                                         // handles the case where this #BRANCHSTART does not directly follow another one
                                         events.push(course::Event {
-                                            offset: 0.0,
+                                            offset: context.offset,
                                             event_type: course::event::BRANCH(branches),
                                         });
                                         course_events_ptr = &mut *events;
@@ -345,7 +361,7 @@ impl Chart {
                                 course_events_ptr = std::ptr::null_mut();
                             }
                         },
-                        "#SECTION" => measure.push_back(course::event::SECTION),
+                        "#SECTION" => measure.push_back(course::event::SECTION), // TODO: investigate into its relation with #BRANCHSTART
                         "#LYRIC" => {
                             if !value.is_empty() {
                                 measure.push_back(course::event::LYRIC(value.to_string()));
@@ -357,12 +373,11 @@ impl Chart {
                                 measure.push_back(course::event::NEXTSONG(nextsong))
                             }
                         }
-                        _ => {
-                            /*if !key.is_empty() {
-                                println!("{}", key);
-                            }*/
-                        }
+                        _ => {}
                     }
+                    /*if !key.is_empty() {
+                        println!("{}", key);
+                    }*/
                     index_low = i + 1;
                     state = parse::State::MetaKey;
                     key = "";
@@ -388,6 +403,11 @@ impl Chart {
                             state = parse::State::CommandKey;
                         }
                         ' ' => {
+                            if previous_character == '\n' {
+                                // ignore indentation
+                                index_low = i + 1;
+                                continue;
+                            }
                             if state == parse::State::CommandKey {
                                 key = &text[index_low..i];
                                 index_low = i + 1;
@@ -421,7 +441,6 @@ impl Chart {
                                 parse::move_events(&mut measure, events, &mut context);
                             }
                         }
-                        // TODO: parse the charts with indentations correctly
                         _ => {}
                     }
                 }

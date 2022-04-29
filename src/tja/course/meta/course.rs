@@ -12,13 +12,13 @@ pub enum Course {
 impl Course {
     pub fn from_str(slice: &str) -> Option<Self> {
         match slice {
-            "Easy" | "0" => Some(Self::Easy),
-            "Normal" | "1" => Some(Self::Normal),
-            "Hard" | "2" => Some(Self::Hard),
-            "Oni" | "Ura" | "Extreme" | "4" => Some(Self::Oni),
-            "Edit" | "Extra" | "5" => Some(Self::Edit),
-            "Dan" | "6" => Some(Self::Dan),
-            "Tower" => Some(Self::Tower),
+            "Easy" | "easy" | "0" => Some(Self::Easy),
+            "Normal" | "normal" | "1" => Some(Self::Normal),
+            "Hard" | "hard" | "2" => Some(Self::Hard),
+            "Oni" | "oni" | "4" => Some(Self::Oni),
+            "Edit" | "edit" | "5" => Some(Self::Edit),
+            "Dan" | "dan" | "6" => Some(Self::Dan),
+            "Tower" | "tower" | "7" => Some(Self::Tower),
             _ => None,
         }
     }

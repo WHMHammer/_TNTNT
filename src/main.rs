@@ -1,54 +1,45 @@
 mod conf;
 mod i18n;
-mod loaders;
+//mod loaders;
+mod player;
 mod tja;
-use rodio::{source::Source, Decoder, OutputStream};
-use std::fs::File;
-use std::io::BufReader;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
+    let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
+    //let tja_path = std::path::Path::new("D:\\Gaming\\Taiko\\Official Songs 20220423\\01 Pop\\Natsu Matsuri\\Natsu Matsuri -New Audio-.tja");
+
     let conf = conf::Conf::default();
-    let chart = tja::Chart::parse_from_path(
-        "Chun Jie Xu Qu/Chun Jie Xu Qu.tja",
-        None,
-        &conf,
-        Some(&"box.def Genre".to_string()),
-    )
-    .unwrap();
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    stream_handle
-        .play_raw(
-            Decoder::new(BufReader::new(
-                File::open("Chun Jie Xu Qu/Chun Jie Xu Qu.wav").unwrap(),
-            ))
-            .unwrap()
-            .convert_samples(),
-        )
-        .unwrap();
-    let t = std::time::Instant::now();
+    let chart =
+        tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
+            .unwrap();
+
+    let sounds = player::resources::Sounds::load_from_directory("snd");
+    let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+
+    if let Some(wave) = &chart.meta.wave {
+        if let Some(directory) = tja_path.parent() {
+            player::resources::sound::play_audio_from_path(&stream_handle, directory.join(wave));
+        }
+    }
+    let mut t = std::time::Instant::now();
+    if chart.meta.offset < 0.0 {
+        let offset = std::time::Duration::from_secs_f64(-chart.meta.offset);
+        t += offset;
+        std::thread::sleep(offset);
+    } else {
+        t -= std::time::Duration::from_secs_f64(chart.meta.offset);
+    }
     let mut flag_balloon = false;
-    for tja::course::Event { offset, event_type } in &chart.oni_course.as_ref().unwrap().p1 {
+    for tja::course::Event { offset, event_type } in &chart.oni_course.as_ref().unwrap().p0 {
         match event_type {
             tja::course::event::Don | tja::course::event::DON => {
                 while t.elapsed().as_millis() as f64 / 1000.0 < *offset {}
-                stream_handle
-                    .play_raw(
-                        Decoder::new(BufReader::new(File::open("snd/don.ogg").unwrap()))
-                            .unwrap()
-                            .convert_samples(),
-                    )
-                    .unwrap();
+                sounds.play_don(&stream_handle);
             }
             tja::course::event::Ka | tja::course::event::KA => {
                 while t.elapsed().as_millis() as f64 / 1000.0 < *offset {}
-                stream_handle
-                    .play_raw(
-                        Decoder::new(BufReader::new(File::open("snd/ka.ogg").unwrap()))
-                            .unwrap()
-                            .convert_samples(),
-                    )
-                    .unwrap();
+                sounds.play_ka(&stream_handle);
             }
             tja::course::event::Balloon | tja::course::event::BALLOON => {
                 flag_balloon = true;
@@ -57,27 +48,13 @@ fn main() {
                 let millis = t.elapsed().as_millis();
                 if millis as f64 / 1000.0 >= offset - 0.1 {
                     if flag_balloon {
-                        stream_handle
-                            .play_raw(
-                                Decoder::new(BufReader::new(
-                                    File::open("snd/balloon.ogg").unwrap(),
-                                ))
-                                .unwrap()
-                                .convert_samples(),
-                            )
-                            .unwrap();
+                        sounds.play_don(&stream_handle);
                         flag_balloon = false;
                     }
                     break;
                 }
                 if millis % 100 == 0 {
-                    stream_handle
-                        .play_raw(
-                            Decoder::new(BufReader::new(File::open("snd/don.ogg").unwrap()))
-                                .unwrap()
-                                .convert_samples(),
-                        )
-                        .unwrap();
+                    sounds.play_don(&stream_handle);
                 }
             },
             _ => {}
@@ -85,5 +62,5 @@ fn main() {
         println!("{:?}", event_type);
     }
     println!("{:#?}", chart);
-    std::thread::sleep(std::time::Duration::from_secs(5));
+    std::thread::sleep(std::time::Duration::from_secs(15));
 }

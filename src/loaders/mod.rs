@@ -9,11 +9,11 @@ pub fn get_all_tja_paths(root: &str) -> Vec<std::path::PathBuf> {
         if let Ok(entires) = directory.read_dir() {
             for entry in entires {
                 if let Ok(entry) = entry {
-                    if let Ok(filetype) = entry.file_type() {
+                    if let Ok(file_type) = entry.file_type() {
                         let path = entry.path();
-                        if filetype.is_dir() {
+                        if file_type.is_dir() {
                             queue.push_back(path);
-                        } else if filetype.is_file() {
+                        } else if file_type.is_file() {
                             if let Some(extension) = path.extension() {
                                 if extension == "tja" {
                                     println!(

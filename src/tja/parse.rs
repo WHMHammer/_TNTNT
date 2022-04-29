@@ -30,8 +30,7 @@ impl Default for Context {
 }
 
 fn second_per_note(context: &Context) -> f64 {
-    60.0 / context.bpm / context.measure_notes_count as f64 / context.measure.0 as f64
-        * context.measure.1 as f64
+    60.0 / context.bpm * context.measure.0 as f64 / context.measure_notes_count as f64
 }
 
 pub fn move_events(
@@ -39,6 +38,9 @@ pub fn move_events(
     events: &mut Vec<super::course::Event>,
     context: &mut Context,
 ) {
+    if measure.is_empty() {
+        return;
+    }
     let mut offset = second_per_note(context);
     use super::course::event::*;
     while let Some(event_type) = measure.pop_front() {
