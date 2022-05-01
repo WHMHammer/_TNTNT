@@ -3,14 +3,13 @@ name = "tntnt"
 version = "0.1.0"
 authors = ["WHMHammer <whmhammer@gmail.com>"]
 edition = "2021"
+description = "Yet another .tja player"
 readme = "README.md"
 repository = "https://github.com/WHMHammer/TNTNT"
 license = "GPL-3.0-or-later"
-keywords = ["game"]
+license-file = "LICENSE.md"
+keywords = ["taiko-no-tatsujin", "tja"]
 categories = ["games"]
-
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 encoding_rs = "*"

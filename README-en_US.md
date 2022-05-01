@@ -1,39 +1,47 @@
 # TNTNT 
 
-`TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronounced as "tee-en-tee-en-tee") aims to parse `.tja` files and:
+[中文（中国）](README.md) English (United States)
+
+The goal of `TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronounced as "tee-en-tee-en-tee") is to parse `.tja` files and:
+
 - visualize per-course charts
 - provide an interactive graphical interface for the users to play the charts
 
-`TNTNT` is still in an early stage. I will not accept any external code contribution until I release the first desktop application (after finishing[stage 2](#stage-2)).
-
-[中文（中国）](README.md)
+`TNTNT` is still in an early stage. I will not accept any external code contribution until I release the first desktop application (after finishing [stage 2](#stage-2)).
 
 ## Table of Contents
 
 - [Motivation](#motivation)
-- [Build](#build)
+- [Known Bugs](#known-bugs)
+- [Dependencies](#dependencies)
 - [Road Map](#road-map)
     - [Stage 1: Visualizing](#stage-1) **(developing)**
-    - [Stage 0: Parsing (v0.x)](#stage-0) **(finished)**
+    - [Stage 0: Parsing](#stage-0) (finished)
     - [Stage 2: Desktop Application](#stage-2) (planned)
-    - [Stage 3: Skinning](#stage-3) (planned)
-    - [Stage 4: Online Multiplayer Mode](#stage-4) (planned)
+    - [Stage 3: Online Multiplayer Mode](#stage-3) (planned)
 
 ## Motivation
 
 I used to play [TJAPlayer3](https://github.com/twopointzero/TJAPlayer3), [Taiko Web](https://github.com/bui/taiko-web), and [OpenTaiko](https://github.com/0auBSQ/OpenTaiko). [TJAPlayer3](https://github.com/twopointzero/TJAPlayer3) and [OpenTaiko](https://github.com/0auBSQ/OpenTaiko) both have some bugs I wish I could fix. However, many variables, functions, and classes are named in Japanese, which I don't understand. ~~I'm also too lazy to learn C#.~~ I didn't notice any bug in [Taiko Web](https://github.com/bui/taiko-web), but it has an unacceptable input delay. Hence, I decided to build a player myself.
 
 Why `Rust`? `Rust` is/has:
+
 - statically typed
 - strongly typed
 - no undefined behavior
 - powerful compile-time checking
 - powerful `enum` and `match`
-- fast
 - memory-safe
 - thread-safe
+- fast
+
+## Known Bugs
+
+- May not be able to parse Dan and Taiko Tower charts correctly (untested)
+- Doesn't parse `STYLE:Double` charts correctly (fixing)
 
 ## Dependencies
+
 - Linux
     - `pkg-config`
     - `libasound2-dev` (Debian-based) or `alsa-lib-devel` (RHEL-based)
@@ -48,9 +56,10 @@ Why `Rust`? `Rust` is/has:
 
     I plan to visualize the charts just like how it is done in [tja-tools](https://github.com/WHMHammer/tja-tools).
 
-- <span id="stage-0">Stage 0: Parsing (v0.0.x)</span> **(finished)**
+- <span id="stage-0">Stage 0: Parsing (v0.0.x)</span> (finished)
 
     `TNTNT`is able to recognize the following meta data, notes, and commands:
+
     - Meta (common)
         - `TITLE` (including the `EN` and `CN` variants)
         - `SUBTITLE` (including the `EN` and `CN` variants)
@@ -95,14 +104,10 @@ Why `Rust`? `Rust` is/has:
         - `#LEVELHOLD`
         - `#NEXTSONG`
 
-- <span id="stage-2">Stage 2: Desktop Application (v1.x.y)</span> (planned
+- <span id="stage-2">Stage 2: Desktop Application (v1.x.y)</span> (planned)
 
     I plan to make a playable desktop application in this stage.
 
-- <span id="stage-3">Stage 3: Skinning (v1.x.y)</span> (planned)
-
-    I plan to add skinning support in this stage.
-
-- <span id="stage-4">Stage 4: Online Multiplayer Mode (v2.x.y)</span> (planned)
+- <span id="stage-3">Stage 3: Online Multiplayer Mode (v2.x.y)</span> (planned)
 
     I plan to add an online multiplayer mode in this stage.
