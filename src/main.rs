@@ -6,9 +6,8 @@ mod tja;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
-    // TODO: test branching
-    let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
-    //let tja_path = std::path::Path::new("D:\\Gaming\\Taiko\\Official Songs 20220423\\01 Pop\\Natsu Matsuri\\Natsu Matsuri -New Audio-.tja");
+    //let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
+    let tja_path = std::path::Path::new("D:\\Gaming\\Taiko\\Official Songs 20220423\\01 Pop\\Natsu Matsuri\\Natsu Matsuri -New Audio-.tja");
 
     let conf = conf::Conf::default();
     let chart =
@@ -58,9 +57,59 @@ fn main() {
                     sounds.play_don(&stream_handle);
                 }
             },
+            tja::course::event::BRANCH(branches) => {
+                for tja::course::Event { offset, event_type } in match branches.thresholds {
+                    tja::course::event::branch::Thresholds::r(_, _) => {
+                        println!("#M");
+                        &branches.m
+                    }
+                    tja::course::event::branch::Thresholds::p(e_threshold, m_threshold) => {
+                        if m_threshold <= 100.0 {
+                            println!("#M");
+                            &branches.m
+                        } else if e_threshold <= 100.0 {
+                            println!("#E");
+                            &branches.e
+                        } else {
+                            println!("#N");
+                            &branches.n
+                        }
+                    }
+                } {
+                    match event_type {
+                        tja::course::event::Don | tja::course::event::DON => {
+                            while t.elapsed().as_millis() as f64 / 1000.0 < *offset {}
+                            sounds.play_don(&stream_handle);
+                        }
+                        tja::course::event::Ka | tja::course::event::KA => {
+                            while t.elapsed().as_millis() as f64 / 1000.0 < *offset {}
+                            sounds.play_ka(&stream_handle);
+                        }
+                        tja::course::event::Balloon | tja::course::event::BALLOON => {
+                            flag_balloon = true;
+                        }
+                        tja::course::event::End => loop {
+                            let millis = t.elapsed().as_millis();
+                            if millis as f64 / 1000.0 >= offset - 0.1 {
+                                if flag_balloon {
+                                    sounds.play_don(&stream_handle);
+                                    flag_balloon = false;
+                                }
+                                break;
+                            }
+                            if millis % 100 == 0 {
+                                sounds.play_don(&stream_handle);
+                            }
+                        },
+                        _ => {}
+                    }
+                    println!("{:?}", event_type);
+                }
+                continue;
+            }
             _ => {}
         }
-        println!("{:?}", event_type);
+        println!("{}", event_type);
     }
     std::thread::sleep(std::time::Duration::from_secs(15));
 }

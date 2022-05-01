@@ -11,9 +11,9 @@ pub enum State {
     Measure,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Context {
-    pub measure: (u8, u8), // numerator, denominator (#MEASURE numerator,denominator)
+    pub measure: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
     pub bpm: f64,
     pub flag_barline: bool,
     pub measure_notes_count: u8,
@@ -23,7 +23,7 @@ pub struct Context {
 impl Default for Context {
     fn default() -> Self {
         Self {
-            measure: (4, 4),
+            measure: (4.0, 4.0),
             bpm: 120.0,
             flag_barline: true,
             measure_notes_count: 0,
@@ -33,20 +33,17 @@ impl Default for Context {
 }
 
 fn second_per_note(context: &Context) -> f64 {
-    60.0 / context.bpm * context.measure.0 as f64 / context.measure_notes_count as f64
+    240.0 / context.bpm * context.measure.0 / context.measure.1 / context.measure_notes_count as f64
 }
 
-pub fn move_events(
+pub fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
     measure: &mut std::collections::VecDeque<course::event::EventType>,
     events: &mut Vec<course::Event>,
     context: &mut Context,
 ) {
-    if measure.is_empty() {
-        return;
-    }
     let mut offset = second_per_note(context);
-    use course::event::*;
     while let Some(event_type) = measure.pop_front() {
+        use course::event::*;
         match event_type {
             Empty => {
                 context.offset += offset;
@@ -59,7 +56,7 @@ pub fn move_events(
                 context.offset += offset;
             }
             MEASURE(numerator, denominator) => {
-                context.measure = (numerator, denominator);
+                context.measure = (numerator as f64, denominator as f64);
                 offset = second_per_note(context);
             }
             BPMCHANGE(bpm) => {
@@ -83,12 +80,28 @@ pub fn move_events(
             }
         }
     }
-    if context.flag_barline {
-        events.push(course::Event {
-            offset: context.offset,
-            event_type: course::event::BARLINE,
-        });
+    if FLAG_EXPLICIT_MEASURE {
+        // am explicit measure with an ending comma
+        if context.measure_notes_count == 0 {
+            // an empty measure
+            context.offset += 60.0 / context.bpm * context.measure.0 as f64;
+        }
+        if context.flag_barline {
+            events.push(course::Event {
+                offset: context.offset,
+                event_type: course::event::BARLINE,
+            });
+        }
+    } else if context.measure_notes_count != 0 {
+        // an implicit measure without an ending comma
+        if context.flag_barline {
+            events.push(course::Event {
+                offset: context.offset,
+                event_type: course::event::BARLINE,
+            });
+        }
     }
+    // otherwise not a measure, but just some commands; do nothing
     context.measure_notes_count = 0;
 }
 
@@ -141,8 +154,8 @@ impl Chart {
             let mut flag_eof = false; // flag: end of file
             let mut state = State::MetaKey; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
             let mut context = Context::default(); // bpm, etc.
-            let mut chart_context = context; // the initial context of the chart; cloned back to context at the #END
-            let mut branchstart_context = chart_context; // the context at #BRANCHSTART; cloned back to context when start parsing another branch
+            let mut chart_context = Context::default(); // the initial context of the chart; cloned back to context at the #END
+            let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to context when start parsing another branch
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
                     i = index;
@@ -295,8 +308,8 @@ impl Chart {
                         },
                         "#END" => {
                             // TODO: handle STYLE:Double correctly
-                            move_events(&mut measure, events, &mut context);
-                            /*{
+                            move_events::<false>(&mut measure, events, &mut context);
+                            {
                                 println!("{:?}", course.meta.course);
                                 use std::io::Write;
                                 let mut path = Vec::new();
@@ -304,8 +317,8 @@ impl Chart {
                                 let mut file =
                                     std::fs::File::create(String::from_utf8(path).unwrap())
                                         .unwrap();
-                                write!(&mut file, "{:#?}", course);
-                            }*/
+                                write!(&mut file, "{:#?}", course).unwrap();
+                            }
                             use course::meta::Course::*;
                             match course.meta.course {
                                 Easy => {
@@ -332,7 +345,7 @@ impl Chart {
                             }
                             events = &mut course.p0;
                             course_events_ptr = std::ptr::null_mut();
-                            context = chart_context;
+                            context = chart_context.clone();
                         }
                         "#MEASURE" => {
                             let mut values = value.split('/');
@@ -370,7 +383,7 @@ impl Chart {
                         "#BARLINEON" => measure.push_back(course::event::BARLINEON),
                         "#BRANCHSTART" => {
                             if let Some(branches) = course::event::Branches::from_str(value) {
-                                move_events(&mut measure, events, &mut context);
+                                move_events::<false>(&mut measure, events, &mut context);
                                 unsafe {
                                     // cannot rewrite with safe code because course_events is (indirectly) owned by events, so we can't have &mut for both
                                     if let Some(course_events) = course_events_ptr.as_mut() {
@@ -407,13 +420,13 @@ impl Chart {
                                         }
                                     }
                                 }
-                                branchstart_context = context;
+                                branchstart_context = context.clone();
                             }
                         }
                         "#N" | "#E" | "#M" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
-                                context = branchstart_context;
-                                move_events(&mut measure, events, &mut context);
+                                context = branchstart_context.clone();
+                                move_events::<false>(&mut measure, events, &mut context);
                                 if let course::event::BRANCH(branches) =
                                     &mut course_events.last_mut().unwrap().event_type
                                 {
@@ -430,7 +443,7 @@ impl Chart {
                         },
                         "#BRANCHEND" => unsafe {
                             if let Some(course_events) = course_events_ptr.as_mut() {
-                                move_events(&mut measure, events, &mut context);
+                                move_events::<false>(&mut measure, events, &mut context);
                                 events = course_events;
                                 course_events_ptr = std::ptr::null_mut();
                             }
@@ -511,18 +524,19 @@ impl Chart {
                             }
                         }
                         ',' => {
-                            if state == State::Measure {
-                                move_events(&mut measure, events, &mut context);
+                            if state == State::Measure || previous_character == '\n' {
+                                move_events::<true>(&mut measure, events, &mut context);
                             }
                         }
                         _ => {}
                     }
                 }
                 if flag_eof {
-                    /*{
+                    {
+                        use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();
-                        write!(&mut file, "{:#?}", course);
-                    }*/
+                        write!(&mut file, "{}", chart).unwrap();
+                    }
                     return Some(chart);
                 }
                 previous_character = character;
