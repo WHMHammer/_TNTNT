@@ -3,7 +3,6 @@ pub mod exam;
 pub mod style;
 pub use {course::Course, exam::Exam, style::Style};
 
-#[derive(Debug)]
 pub struct Meta {
     pub course: Course,
     pub level: u8,
@@ -29,5 +28,32 @@ impl Default for Meta {
             exam2: None,
             exam3: None,
         }
+    }
+}
+
+impl std::fmt::Debug for Meta {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "COURSE:{:?}", self.course)?;
+        writeln!(f, "LEVEL:{}", self.level)?;
+        if !self.balloon.is_empty() {
+            write!(f, "BALLOON:{}", self.balloon[0])?;
+            for count in &self.balloon[1..] {
+                write!(f, ",{}", count)?;
+            }
+            writeln!(f)?;
+        }
+        writeln!(f, "SCOREDIFF:{}", self.scorediff)?;
+        writeln!(f, "SCOREINIT:{}", self.scoreinit)?;
+        write!(f, "STYLE:{:?}", self.style)?;
+        if let Some(exam) = &self.exam1 {
+            write!(f, "\nEXAM1:{:?}", exam)?;
+        }
+        if let Some(exam) = &self.exam2 {
+            write!(f, "\nEXAM2:{:?}", exam)?;
+        }
+        if let Some(exam) = &self.exam3 {
+            write!(f, "\nEXAM3:{:?}", exam)?;
+        }
+        Ok(())
     }
 }

@@ -2,7 +2,7 @@
 
 [中文（中国）](README.md) English (United States)
 
-The goal of `TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronounced as "tee-en-tee-en-tee") is to parse `.tja` files and:
+The goal of `TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronounced as "tee-en-tee-en-tee") is to parse `.tja` files and to:
 
 - visualize per-course charts
 - provide an interactive graphical interface for the users to play the charts
@@ -15,14 +15,14 @@ The goal of `TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronoun
 - [Known Bugs](#known-bugs)
 - [Dependencies](#dependencies)
 - [Road Map](#road-map)
-    - [Stage 1: Visualizing](#stage-1) **(developing)**
+    - [Stage 1: Visualizing](#stage-1) **(in progress)**
     - [Stage 0: Parsing](#stage-0) (finished)
     - [Stage 2: Desktop Application](#stage-2) (planned)
     - [Stage 3: Online Multiplayer Mode](#stage-3) (planned)
 
 ## Motivation
 
-I used to play [TJAPlayer3](https://github.com/twopointzero/TJAPlayer3), [Taiko Web](https://github.com/bui/taiko-web), and [OpenTaiko](https://github.com/0auBSQ/OpenTaiko). [TJAPlayer3](https://github.com/twopointzero/TJAPlayer3) and [OpenTaiko](https://github.com/0auBSQ/OpenTaiko) both have some bugs I wish I could fix. However, many variables, functions, and classes are named in Japanese, which I don't understand. ~~I'm also too lazy to learn C#.~~ I didn't notice any bug in [Taiko Web](https://github.com/bui/taiko-web), but it has an unacceptable input delay. Hence, I decided to build a player myself.
+I used to play [TJAPlayer3](https://github.com/twopointzero/TJAPlayer3), [Taiko Web](https://github.com/bui/taiko-web), and [OpenTaiko](https://github.com/0auBSQ/OpenTaiko). [TJAPlayer3](https://github.com/twopointzero/TJAPlayer3) and [OpenTaiko](https://github.com/0auBSQ/OpenTaiko) both have some bugs I wish I could fix. However, a lot of stuff are named in Japanese, which I don't understand. ~~I'm also too lazy to learn C#.~~ I didn't notice any bug in [Taiko Web](https://github.com/bui/taiko-web), but it has an unacceptable input delay. Hence, I decide to build a player myself.
 
 Why `Rust`? `Rust` is/has:
 
@@ -52,7 +52,7 @@ Why `Rust`? `Rust` is/has:
 
 ## Road Map
 
-- <span id="stage-1">Stage 1: Visualizing (v0.1.x)</span> **(developing)**
+- <span id="stage-1">Stage 1: Visualizing (v0.1.x)</span> **(in progress)**
 
     I plan to visualize the charts just like how it is done in [tja-tools](https://github.com/WHMHammer/tja-tools).
 

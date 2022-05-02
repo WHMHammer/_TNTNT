@@ -535,7 +535,7 @@ impl Chart {
                     {
                         use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();
-                        write!(&mut file, "{}", chart).unwrap();
+                        write!(&mut file, "{:?}", chart).unwrap();
                     }
                     return Some(chart);
                 }

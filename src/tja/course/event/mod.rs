@@ -3,7 +3,6 @@ pub mod nextsong;
 pub use branch::Branches;
 pub use nextsong::Nextsong;
 
-#[derive(Debug)]
 pub enum EventType {
     Empty,    // 0
     Don,      // 1
@@ -32,104 +31,33 @@ pub enum EventType {
 }
 pub use EventType::*;
 
-impl std::fmt::Display for EventType {
+impl std::fmt::Debug for EventType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Don
-            | Self::Ka
-            | Self::DON
-            | Self::KA
-            | Self::Drumroll
-            | Self::DRUMROLL
-            | Self::Balloon
-            | Self::End
-            | Self::BALLOON => {
-                write!(f, "{:?}", self)
-            }
-            Self::MEASURE(numerator, denominator) => {
-                write!(f, "#MEASURE {},{}", numerator, denominator)
-            }
-            Self::BPMCHANGE(bpm) => {
-                write!(f, "#BPMCHANGE {}", bpm)
-            }
-            Self::DELAY(delay) => {
-                write!(f, "#DELAY {}", delay)
-            }
-            Self::SCROLL(scroll) => {
-                write!(f, "#SCROLL {}", scroll)
-            }
-            Self::BARLINE => {
-                write!(f, ",")
-            }
-            Self::BRANCH(branches) => match branches.thresholds {
-                branch::Thresholds::r(e, m) => {
-                    writeln!(f, "#BRANCHSTART r,{},{}", e, m)
-                }
-                branch::Thresholds::p(e, m) => {
-                    writeln!(f, "#BRANCHSTART p,{},{}", e, m)
-                }
-            }
-            .and(writeln!(f, "#N"))
-            .and({
-                let mut iter = branches.n.iter();
-                loop {
-                    if let Some(event) = iter.next() {
-                        let r = writeln!(f, "{:#?}", event);
-                        if r.is_err() {
-                            break r;
-                        }
-                    } else {
-                        break Ok(());
-                    }
-                }
-            })
-            .and(writeln!(f, "#E"))
-            .and({
-                let mut iter = branches.e.iter();
-                loop {
-                    if let Some(event) = iter.next() {
-                        let r = writeln!(f, "{:#?}", event);
-                        if r.is_err() {
-                            break r;
-                        }
-                    } else {
-                        break Ok(());
-                    }
-                }
-            })
-            .and(writeln!(f, "#M"))
-            .and({
-                let mut iter = branches.m.iter();
-                loop {
-                    if let Some(event) = iter.next() {
-                        let r = writeln!(f, "{:#?}", event);
-                        if r.is_err() {
-                            break r;
-                        }
-                    } else {
-                        break Ok(());
-                    }
-                }
-            })
-            .and(write!(f, "#BRANCHEND")),
-            Self::LYRIC(lyric) => {
-                write!(f, "#LYRIC {}", lyric)
-            }
-            Self::NEXTSONG(nextsong) => {
-                write!(
-                    f,
-                    "#NEXTSONG {},{},{},{},{},{}",
-                    nextsong.title,
-                    nextsong.subtitle,
-                    nextsong.genre,
-                    nextsong.wave,
-                    nextsong.scoreinit,
-                    nextsong.scorediff
-                )
-            }
-            _ => {
-                write!(f, "#{:?}", self)
-            }
+            Empty => write!(f, "0"),
+            Don => write!(f, "1"),
+            Ka => write!(f, "2"),
+            DON => write!(f, "3"),
+            KA => write!(f, "4"),
+            Drumroll => write!(f, "5"),
+            DRUMROLL => write!(f, "6"),
+            Balloon => write!(f, "7"),
+            End => write!(f, "8"),
+            BALLOON => write!(f, "9"),
+            MEASURE(numerator, denominator) => write!(f, "#MEASURE {},{}", numerator, denominator),
+            BPMCHANGE(bpm) => write!(f, "#BPMCHANGE {}", bpm),
+            DELAY(delay) => write!(f, "#DELAY {}", delay),
+            SCROLL(scroll) => write!(f, "#SCROLL {}", scroll),
+            GOGOSTART => write!(f, "#GOGOSTART"),
+            GOGOEND => write!(f, "#GOGOEND"),
+            BARLINEOFF => write!(f, "#BARLINEOFF"),
+            BARLINEON => write!(f, "#BARLINEON"),
+            BARLINE => write!(f, ","),
+            BRANCH(branches) => write!(f, "{:?}", branches),
+            SECTION => write!(f, "#SECTION"),
+            LYRIC(lyric) => write!(f, "#LYRIC {}", lyric),
+            LEVELHOLD => write!(f, "#LEVELHOLD"),
+            NEXTSONG(nextsong) => write!(f, "{:?}", nextsong),
         }
     }
 }
@@ -141,10 +69,9 @@ pub struct Event {
 
 impl std::fmt::Debug for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{}\t\t@ {:.3}", self.event_type, self.offset)
-        } else {
-            write!(f, "{:?} @ {:.3}", self.event_type, self.offset)
+        match self.event_type {
+            BRANCH(_) => write!(f, "{:?}", self.event_type),
+            _ => write!(f, "{:?}\t@ {:.3}", self.event_type, self.offset),
         }
     }
 }

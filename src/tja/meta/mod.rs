@@ -3,7 +3,6 @@ pub use score_mode::ScoreMode;
 
 use crate::i18n::I18nString;
 
-#[derive(Debug)]
 pub struct Meta {
     pub title: I18nString,
     pub subtitle: I18nString,
@@ -29,5 +28,32 @@ impl Default for Meta {
             life: 0,
             bgmovie: None,
         }
+    }
+}
+
+impl std::fmt::Debug for Meta {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "TITLE:{}", self.title.get(&[]))?;
+        writeln!(f, "SUBTITLE:{}", self.subtitle.get(&[]))?;
+        if let Some(wave) = &self.wave {
+            writeln!(f, "WAVE:{}", wave)?;
+        }
+        if self.offset != 0.0 {
+            writeln!(f, "OFFSET:{}", self.offset)?;
+        }
+        if self.demostart != 0.0 {
+            writeln!(f, "DEMOSTART:{}", self.demostart)?;
+        }
+        if let Some(genre) = &self.genre {
+            writeln!(f, "GENRE:{}", genre)?;
+        }
+        write!(f, "SCOREMODE:{:?}", self.scoremode)?;
+        if self.life != 0 {
+            write!(f, "\nLIFE:{}", self.life)?;
+        }
+        if let Some(bgmovie) = &self.bgmovie {
+            write!(f, "\nBGMOVIE:{}", bgmovie)?;
+        }
+        Ok(())
     }
 }

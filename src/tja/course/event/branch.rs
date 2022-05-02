@@ -1,11 +1,22 @@
-#[derive(Debug)]
 #[allow(non_camel_case_types)]
 pub enum Thresholds {
     r(u8, u8),
     p(f64, f64),
 }
 
-#[derive(Debug)]
+impl std::fmt::Debug for Thresholds {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::r(e, m) => {
+                write!(f, "r,{},{}", e, m)
+            }
+            Self::p(e, m) => {
+                write!(f, "p,{},{}", e, m)
+            }
+        }
+    }
+}
+
 pub struct Branches {
     pub thresholds: Thresholds,
     pub n: Vec<super::Event>,
@@ -52,5 +63,30 @@ impl Branches {
             _ => {}
         }
         None
+    }
+}
+
+impl std::fmt::Debug for Branches {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "#BRANCHSTART {:?}", self.thresholds)?;
+        if !self.n.is_empty() {
+            writeln!(f, "#N")?;
+            for event in &self.n {
+                writeln!(f, "{:?}", event)?;
+            }
+        }
+        if !self.e.is_empty() {
+            writeln!(f, "#E")?;
+            for event in &self.e {
+                writeln!(f, "{:?}", event)?;
+            }
+        }
+        if !self.m.is_empty() {
+            writeln!(f, "#M")?;
+            for event in &self.m {
+                writeln!(f, "{:?}", event)?;
+            }
+        }
+        write!(f, "#BRANCHEND")
     }
 }

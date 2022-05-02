@@ -1,5 +1,12 @@
-/target
+# rust
+_*.rs
 Cargo.lock
+/target
+
+# editor
 .vscode
+
+# test
+/System
 /*.tja
 *.out

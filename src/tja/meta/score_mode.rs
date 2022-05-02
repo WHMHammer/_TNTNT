@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum ScoreMode {
     Mode0, // AC 1 to AC 7
     Mode1, // AC 8 to AC 14
@@ -21,5 +21,15 @@ impl ScoreMode {
 impl Default for ScoreMode {
     fn default() -> Self {
         Self::Mode1
+    }
+}
+
+impl std::fmt::Debug for ScoreMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Mode0 => write!(f, "0"),
+            Self::Mode1 => write!(f, "1"),
+            Self::Mode2 => write!(f, "2"),
+        }
     }
 }

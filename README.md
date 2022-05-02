@@ -22,7 +22,7 @@
 
 ## 动机
 
-我曾使用过[TJAPlayer3](https://github.com/twopointzero/TJAPlayer3)、[Taiko Web](https://github.com/bui/taiko-web)以及[OpenTaiko](https://github.com/0auBSQ/OpenTaiko)。[TJAPlayer3](https://github.com/twopointzero/TJAPlayer3)和[OpenTaiko](https://github.com/0auBSQ/OpenTaiko)都有些bug，但它们很多地方都是用日文命名的，而我不懂日文。<del>我也懒得学C#。</del>我没发现[Taiko Web](https://github.com/bui/taiko-web)有什么bug，但它的输入延迟太高了。因此，我决定自己制作一个模拟器。
+我曾使用过[TJAPlayer3](https://github.com/twopointzero/TJAPlayer3)、[Taiko Web](https://github.com/bui/taiko-web)以及[OpenTaiko](https://github.com/0auBSQ/OpenTaiko)。[TJAPlayer3](https://github.com/twopointzero/TJAPlayer3)和[OpenTaiko](https://github.com/0auBSQ/OpenTaiko)都有些bug，但它们很多地方都是用日文命名的，而我不懂日文。<del>我也懒得学C#。</del>[Taiko Web](https://github.com/bui/taiko-web)没什么bug，但它的输入延迟太高了。因此，我决定自己制作一个模拟器。
 
 为什么用`Rust`？`Rust`有以下优点：
 
@@ -38,7 +38,7 @@
 ## 已知问题
 
 - 可能不能正确解析段位道场和太鼓塔谱面（尚未测试）
-- 不能正确解析`STYLE:Double`的谱面（修复中）
+- 不能正确解析`STYLE:Double`谱面（修复中）
 
 ## 依赖
 
@@ -54,7 +54,7 @@
 
 - <span id="stage-1">第一阶段：图形化谱面（v0.1.x）</span>**（开发中）**
 
-    我计划在本阶段实现谱面的图形化（像[tja-tools](https://github.com/WHMHammer/tja-tools)一样）。
+    我计划在本阶段实现谱面的图形化（参考[tja-tools](https://github.com/WHMHammer/tja-tools)）。
 
 - <span id="stage-0">第零阶段：解析（v0.0.x）</span>（已完成）
 
@@ -106,7 +106,7 @@
 
 - <span id="stage-2">第二阶段：桌面应用（v1.x.y）</span>（计划中）
 
-    我计划在本阶段实现一个可玩的桌面应用程序。
+    我计划在本阶段实现交互式的桌面应用程序。
 
 - <span id="stage-3">第三阶段：在线多人模式（v2.x.y）</span>（计划中）
 

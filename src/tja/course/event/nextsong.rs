@@ -1,4 +1,3 @@
-#[derive(Debug)]
 pub struct Nextsong {
     pub title: String,
     pub subtitle: String,
@@ -36,5 +35,15 @@ impl Nextsong {
             }
         }
         None
+    }
+}
+
+impl std::fmt::Debug for Nextsong {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "#NEXTSONG {},{},{},{},{},{}",
+            self.title, self.subtitle, self.genre, self.wave, self.scoreinit, self.scorediff
+        )
     }
 }

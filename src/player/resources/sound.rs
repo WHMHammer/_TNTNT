@@ -18,7 +18,7 @@ impl Sounds {
                         if file_type.is_file() {
                             let path = entry.path();
                             if let Some(file_stem) = path.file_stem() {
-                                if file_stem == "don" {
+                                if file_stem == "dong" {
                                     sounds.don =
                                         Some(std::io::Cursor::new(std::fs::read(path).unwrap()))
                                 } else if file_stem == "ka" {
@@ -38,8 +38,8 @@ impl Sounds {
     }
 
     pub fn play_don(&self, stream_handle: &rodio::OutputStreamHandle) {
-        if let Some(don) = &self.don {
-            if let Ok(decoder) = rodio::Decoder::new(don.clone()) {
+        if let Some(sound) = &self.don {
+            if let Ok(decoder) = rodio::Decoder::new(sound.clone()) {
                 use rodio::Source;
                 let _ = stream_handle.play_raw(decoder.convert_samples());
             }
@@ -47,8 +47,17 @@ impl Sounds {
     }
 
     pub fn play_ka(&self, stream_handle: &rodio::OutputStreamHandle) {
-        if let Some(don) = &self.ka {
-            if let Ok(decoder) = rodio::Decoder::new(don.clone()) {
+        if let Some(sound) = &self.ka {
+            if let Ok(decoder) = rodio::Decoder::new(sound.clone()) {
+                use rodio::Source;
+                let _ = stream_handle.play_raw(decoder.convert_samples());
+            }
+        }
+    }
+
+    pub fn play_balloon(&self, stream_handle: &rodio::OutputStreamHandle) {
+        if let Some(sound) = &self.balloon {
+            if let Ok(decoder) = rodio::Decoder::new(sound.clone()) {
                 use rodio::Source;
                 let _ = stream_handle.play_raw(decoder.convert_samples());
             }

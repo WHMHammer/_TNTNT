@@ -1,6 +1,6 @@
-#[derive(Debug)]
 #[allow(non_camel_case_types)]
 pub enum Condition {
+    // condition(read, gold)
     g(f64, f64),
     jp(u16, u16),
     jg(u16, u16),
@@ -11,6 +11,21 @@ pub enum Condition {
     c(u16, u16),
 }
 
+impl std::fmt::Debug for Condition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::g(r, g) => write!(f, "g,{},{}", r, g),
+            Self::jp(r, g) => write!(f, "jp,{},{}", r, g),
+            Self::jg(r, g) => write!(f, "jg,{},{}", r, g),
+            Self::jb(r, g) => write!(f, "jb,{},{}", r, g),
+            Self::s(r, g) => write!(f, "s,{},{}", r, g),
+            Self::r(r, g) => write!(f, "r,{},{}", r, g),
+            Self::h(r, g) => write!(f, "h,{},{}", r, g),
+            Self::c(r, g) => write!(f, "c,{},{}", r, g),
+        }
+    }
+}
+
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
 pub enum Scope {
@@ -18,7 +33,6 @@ pub enum Scope {
     l,
 }
 
-#[derive(Debug)]
 pub struct Exam {
     pub condition: Condition,
     pub scope: Scope,
@@ -249,5 +263,11 @@ impl Exam {
             _ => {}
         }
         None
+    }
+}
+
+impl std::fmt::Debug for Exam {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?},{:?}", self.condition, self.scope)
     }
 }
