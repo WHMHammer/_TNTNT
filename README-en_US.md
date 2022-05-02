@@ -37,7 +37,7 @@ Why `Rust`? `Rust` is/has:
 
 ## Known Bug(s)
 
-- Doesn't parse `STYLE:Double` charts correctly (fixing)
+- (None)
 
 ## Dependencies
 

@@ -40,11 +40,34 @@ enum Branch {
     M,
 }
 
+#[derive(Clone, Copy)]
+#[allow(non_camel_case_types)]
+enum Player {
+    p0,
+    p1,
+    p2,
+}
+
 impl Branch {
-    fn get_events_mut<'c>(&self, c: &'c mut super::Course) -> &'c mut Vec<course::Event> {
+    fn get_events_mut<'course>(
+        &self,
+        course: &'course mut super::Course,
+        player: Player,
+    ) -> &'course mut Vec<course::Event> {
         if *self == Self::None {
-            &mut c.events
-        } else if let course::event::BRANCH(branches) = &mut c.events.last_mut().unwrap().event_type
+            match player {
+                Player::p0 => &mut course.p0,
+                Player::p1 => &mut course.p1,
+                Player::p2 => &mut course.p2,
+            }
+        } else if let course::event::BRANCH(branches) = &mut match player {
+            Player::p0 => &mut course.p0,
+            Player::p1 => &mut course.p1,
+            Player::p2 => &mut course.p2,
+        }
+        .last_mut()
+        .unwrap()
+        .event_type
         {
             match self {
                 Self::N => &mut branches.n,
@@ -186,8 +209,10 @@ impl super::Chart {
             let mut chart_context = Context::default(); // the initial context of the chart; cloned back to context at the #END
             let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to context when start parsing another branch
             let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to the chart at the end of the measures ("," in tja)
-            let mut course = course::meta::Course::default(); // the current course working on
-            let mut branch = Branch::None; // the current branch working on
+            let mut course = course::meta::Course::default();
+            let mut branch = Branch::None;
+            let mut style = course::meta::Style::Single;
+            let mut player = Player::p0;
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
                     i = index;
@@ -275,6 +300,7 @@ impl super::Chart {
                         }
                         "COURSE" => {
                             if let Some(c) = course::meta::Course::from_str(value) {
+                                chart.get_mut(c).meta.course = c;
                                 course = c;
                             }
                         }
@@ -286,23 +312,35 @@ impl super::Chart {
                         "BALLOON" => {
                             for value in value.split(',') {
                                 if let Ok(value) = value.parse() {
-                                    chart.get_mut(course).meta.balloon.push(value);
+                                    if style == course::meta::Style::Single {
+                                        chart.get_mut(course).meta.balloon.push(value);
+                                    } else {
+                                        chart.get_mut(course).meta.balloon_double.push(value);
+                                    }
                                 }
                             }
                         }
                         "SCOREINIT" => {
                             if let Ok(scoreinit) = value.parse() {
-                                chart.get_mut(course).meta.scoreinit = scoreinit;
+                                if style == course::meta::Style::Single {
+                                    chart.get_mut(course).meta.scoreinit = scoreinit;
+                                } else {
+                                    chart.get_mut(course).meta.scoreinit_double = scoreinit;
+                                }
                             }
                         }
                         "SCOREDIFF" => {
                             if let Ok(scorediff) = value.parse() {
-                                chart.get_mut(course).meta.scorediff = scorediff;
+                                if style == course::meta::Style::Single {
+                                    chart.get_mut(course).meta.scorediff = scorediff;
+                                } else {
+                                    chart.get_mut(course).meta.scorediff_double = scorediff;
+                                }
                             }
                         }
                         "STYLE" => {
-                            if let Some(style) = course::meta::Style::from_str(value) {
-                                chart.get_mut(course).meta.style = style;
+                            if let Some(s) = course::meta::Style::from_str(value) {
+                                style = s;
                             }
                         }
                         "EXAM1" => {
@@ -316,11 +354,17 @@ impl super::Chart {
                         }
                         "#START" => {
                             // TODO: insert the initial barline when necessary
+                            match value {
+                                "" => player = Player::p0,
+                                "P1" => player = Player::p1,
+                                "P2" => player = Player::p2,
+                                _ => {}
+                            }
                         }
                         "#END" => {
                             move_events::<false>(
                                 &mut measure,
-                                &mut chart.get_mut(course).events,
+                                branch.get_events_mut(chart.get_mut(course), player),
                                 &mut context,
                             );
                             {
@@ -335,6 +379,8 @@ impl super::Chart {
                                 write!(&mut file, "{:#?}", course).unwrap();
                             }
                             context = chart_context.clone();
+                            branch = Branch::None;
+                            style = course::meta::Style::default();
                         }
                         "#MEASURE" => {
                             let mut values = value.split('/');
@@ -375,10 +421,15 @@ impl super::Chart {
                                 let course = chart.get_mut(course);
                                 move_events::<false>(
                                     &mut measure,
-                                    branch.get_events_mut(course),
+                                    branch.get_events_mut(course, player),
                                     &mut context,
                                 );
-                                course.events.push(course::Event {
+                                match player {
+                                    Player::p0 => &mut course.p0,
+                                    Player::p1 => &mut course.p1,
+                                    Player::p2 => &mut course.p2,
+                                }
+                                .push(course::Event {
                                     offset: context.offset,
                                     event_type: course::event::BRANCH(branches),
                                 });
@@ -390,7 +441,7 @@ impl super::Chart {
                             if branch != Branch::None {
                                 move_events::<false>(
                                     &mut measure,
-                                    branch.get_events_mut(chart.get_mut(course)),
+                                    branch.get_events_mut(chart.get_mut(course), player),
                                     &mut context,
                                 );
                                 branch = match key {
@@ -406,7 +457,7 @@ impl super::Chart {
                             if branch != Branch::None {
                                 move_events::<false>(
                                     &mut measure,
-                                    &mut chart.get_mut(course).events,
+                                    branch.get_events_mut(chart.get_mut(course), player),
                                     &mut context,
                                 );
                                 branch = Branch::None;
@@ -489,30 +540,22 @@ impl super::Chart {
                         }
                         ',' => {
                             if state == State::Measure || previous_character == '\n' {
-                                if branch == Branch::None {
-                                    move_events::<true>(
-                                        &mut measure,
-                                        &mut chart.get_mut(course).events,
-                                        &mut context,
-                                    );
-                                } else {
-                                    move_events::<true>(
-                                        &mut measure,
-                                        branch.get_events_mut(chart.get_mut(course)),
-                                        &mut context,
-                                    );
-                                }
+                                move_events::<true>(
+                                    &mut measure,
+                                    branch.get_events_mut(chart.get_mut(course), player),
+                                    &mut context,
+                                );
                             }
                         }
                         _ => {}
                     }
                 }
                 if flag_eof {
-                    /*{
+                    {
                         use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();
                         write!(&mut file, "{:?}", chart).unwrap();
-                    }*/
+                    }
                     return Some(chart);
                 }
                 previous_character = character;

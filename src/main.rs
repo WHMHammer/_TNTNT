@@ -4,15 +4,14 @@ mod tja;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
-    //let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
-    //let tja_path = std::path::Path::new("D:\\Gaming\\Taiko\\Official Songs 20220423\\01 Pop\\Natsu Matsuri\\Natsu Matsuri -New Audio-.tja");
-    let tja_path = std::path::Path::new("D:\\Gaming\\Taiko\\Official Songs 20220423\\09 Namco Original\\Angel Dream\\Angel Dream.tja");
+    let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
 
     let conf = player::Conf::default();
     let chart =
         tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
             .unwrap();
-    let course = chart.edit_course.as_ref().unwrap();
+    let course = chart.oni_course.as_ref().unwrap();
+    let events = &course.p0;
     println!("{:?}", course.meta);
 
     let sounds = player::resources::Sounds::load_from_directory("System/Switch-Style/Sounds/"); // TJAPlayer3-style resources
@@ -40,7 +39,7 @@ fn main() {
         t -= std::time::Duration::from_secs_f64(chart.meta.offset);
     }
     let mut flag_balloon = false;
-    for event in &course.events {
+    for event in events {
         use tja::course::event::*;
         match &event.event_type {
             Don | DON => {
