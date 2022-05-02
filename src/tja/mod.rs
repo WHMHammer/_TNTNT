@@ -18,7 +18,7 @@ pub struct Chart {
 }
 
 impl Chart {
-    pub fn get(&self, c: course::meta::Course) -> Option<&Course> {
+    pub fn get_course(&self, c: course::meta::Course) -> Option<&Course> {
         use course::meta::Course::*;
         match c {
             Easy => self.easy_course.as_ref(),
@@ -31,7 +31,7 @@ impl Chart {
         }
     }
 
-    pub fn get_mut(&mut self, c: course::meta::Course) -> &mut Course {
+    pub fn get_course_mut(&mut self, c: course::meta::Course) -> &mut Course {
         use course::meta::Course::*;
         match c {
             Easy => {

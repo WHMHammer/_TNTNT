@@ -16,8 +16,6 @@ impl ScoreMode {
     }
 }
 
-// TODO: add score calculation calculations (using functional programming)
-
 impl Default for ScoreMode {
     fn default() -> Self {
         Self::Mode1

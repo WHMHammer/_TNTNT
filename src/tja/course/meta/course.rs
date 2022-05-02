@@ -1,12 +1,12 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Course {
-    Easy,   // かんたん
-    Normal, // ふつう
-    Hard,   // むずかしい
-    Oni,    // おに（表）
-    Edit,   // おに（裏）
-    Dan,    // 段位道場
-    Tower,  // 太鼓タワー
+    Easy,
+    Normal,
+    Hard,
+    Oni,
+    Edit,
+    Dan,
+    Tower,
 }
 
 impl Course {

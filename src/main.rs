@@ -1,12 +1,12 @@
 mod i18n;
-mod player;
+mod application;
 mod tja;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
     let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
 
-    let conf = player::Conf::default();
+    let conf = application::Conf::default();
     let chart =
         tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
             .unwrap();
@@ -14,7 +14,7 @@ fn main() {
     let events = &course.p0;
     println!("{:?}", course.meta);
 
-    let sounds = player::resources::Sounds::load_from_directory("System/Switch-Style/Sounds/"); // TJAPlayer3-style resources
+    let sounds = application::resources::Sounds::load_from_directory("System/Switch-Style/Sounds/"); // TJAPlayer3-style resources
     let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
     let sink = rodio::Sink::try_new(&stream_handle).unwrap();
 
@@ -44,11 +44,11 @@ fn main() {
         match &event.event_type {
             Don | DON => {
                 while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                sounds.play(&stream_handle, player::resources::sounds::Don);
+                sounds.play(&stream_handle, application::resources::sounds::Don);
             }
             Ka | KA => {
                 while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                sounds.play(&stream_handle, player::resources::sounds::Ka);
+                sounds.play(&stream_handle, application::resources::sounds::Ka);
             }
             Balloon | BALLOON => {
                 flag_balloon = true;
@@ -57,13 +57,13 @@ fn main() {
                 let millis = t.elapsed().as_millis();
                 if millis as f64 / 1000.0 >= event.offset - 0.1 {
                     if flag_balloon {
-                        sounds.play(&stream_handle, player::resources::sounds::Balloon);
+                        sounds.play(&stream_handle, application::resources::sounds::Balloon);
                         flag_balloon = false;
                     }
                     break;
                 }
                 if millis % 100 == 0 {
-                    sounds.play(&stream_handle, player::resources::sounds::Don);
+                    sounds.play(&stream_handle, application::resources::sounds::Don);
                 }
             },
             BRANCH(branches) => {
@@ -88,11 +88,11 @@ fn main() {
                     match event.event_type {
                         Don | DON => {
                             while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                            sounds.play(&stream_handle, player::resources::sounds::Don);
+                            sounds.play(&stream_handle, application::resources::sounds::Don);
                         }
                         Ka | KA => {
                             while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                            sounds.play(&stream_handle, player::resources::sounds::Ka);
+                            sounds.play(&stream_handle, application::resources::sounds::Ka);
                         }
                         Balloon | BALLOON => {
                             flag_balloon = true;
@@ -101,13 +101,13 @@ fn main() {
                             let millis = t.elapsed().as_millis();
                             if millis as f64 / 1000.0 >= event.offset - 0.1 {
                                 if flag_balloon {
-                                    sounds.play(&stream_handle, player::resources::sounds::Balloon);
+                                    sounds.play(&stream_handle, application::resources::sounds::Balloon);
                                     flag_balloon = false;
                                 }
                                 break;
                             }
                             if millis % 100 == 0 {
-                                sounds.play(&stream_handle, player::resources::sounds::Don);
+                                sounds.play(&stream_handle, application::resources::sounds::Don);
                             }
                         },
                         _ => {}
