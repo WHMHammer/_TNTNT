@@ -532,11 +532,11 @@ impl Chart {
                     }
                 }
                 if flag_eof {
-                    {
+                    /*{
                         use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();
                         write!(&mut file, "{:?}", chart).unwrap();
-                    }
+                    }*/
                     return Some(chart);
                 }
                 previous_character = character;

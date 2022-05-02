@@ -71,7 +71,7 @@ impl std::fmt::Debug for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.event_type {
             BRANCH(_) => write!(f, "{:?}", self.event_type),
-            _ => write!(f, "{:?}\t@ {:.3}", self.event_type, self.offset),
+            _ => write!(f, "{:?}\t@ {:.3}s", self.event_type, self.offset),
         }
     }
 }

@@ -15,10 +15,15 @@ fn main() {
 
     let sounds = player::resources::Sounds::load_from_directory("System/Switch-Style/Sounds/"); // TJAPlayer3-style resources
     let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+    let sink = rodio::Sink::try_new(&stream_handle).unwrap();
 
     if let Some(wave) = &chart.meta.wave {
         if let Some(directory) = tja_path.parent() {
-            player::resources::sound::play_audio_from_path(&stream_handle, directory.join(wave));
+            if let Ok(file) = std::fs::File::open(directory.join(wave)) {
+                if let Ok(decoder) = rodio::Decoder::new(std::io::BufReader::new(file)) {
+                    sink.append(decoder)
+                }
+            }
         }
     }
     let mut t = std::time::Instant::now();
@@ -34,11 +39,11 @@ fn main() {
         match &event.event_type {
             tja::course::event::Don | tja::course::event::DON => {
                 while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                sounds.play_don(&stream_handle);
+                sounds.play(&stream_handle, player::resources::sound::Don);
             }
             tja::course::event::Ka | tja::course::event::KA => {
                 while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                sounds.play_ka(&stream_handle);
+                sounds.play(&stream_handle, player::resources::sound::Ka);
             }
             tja::course::event::Balloon | tja::course::event::BALLOON => {
                 flag_balloon = true;
@@ -47,13 +52,13 @@ fn main() {
                 let millis = t.elapsed().as_millis();
                 if millis as f64 / 1000.0 >= event.offset - 0.1 {
                     if flag_balloon {
-                        sounds.play_balloon(&stream_handle);
+                        sounds.play(&stream_handle, player::resources::sound::Balloon);
                         flag_balloon = false;
                     }
                     break;
                 }
                 if millis % 100 == 0 {
-                    sounds.play_don(&stream_handle);
+                    sounds.play(&stream_handle, player::resources::sound::Don);
                 }
             },
             tja::course::event::BRANCH(branches) => {
@@ -78,11 +83,11 @@ fn main() {
                     match event.event_type {
                         tja::course::event::Don | tja::course::event::DON => {
                             while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                            sounds.play_don(&stream_handle);
+                            sounds.play(&stream_handle, player::resources::sound::Don);
                         }
                         tja::course::event::Ka | tja::course::event::KA => {
                             while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                            sounds.play_ka(&stream_handle);
+                            sounds.play(&stream_handle, player::resources::sound::Ka);
                         }
                         tja::course::event::Balloon | tja::course::event::BALLOON => {
                             flag_balloon = true;
@@ -91,13 +96,13 @@ fn main() {
                             let millis = t.elapsed().as_millis();
                             if millis as f64 / 1000.0 >= event.offset - 0.1 {
                                 if flag_balloon {
-                                    sounds.play_balloon(&stream_handle);
+                                    sounds.play(&stream_handle, player::resources::sound::Balloon);
                                     flag_balloon = false;
                                 }
                                 break;
                             }
                             if millis % 100 == 0 {
-                                sounds.play_don(&stream_handle);
+                                sounds.play(&stream_handle, player::resources::sound::Don);
                             }
                         },
                         _ => {}
@@ -110,5 +115,5 @@ fn main() {
         }
         println!("{:?}", event);
     }
-    std::thread::sleep(std::time::Duration::from_secs(15));
+    sink.sleep_until_end();
 }
