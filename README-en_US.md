@@ -7,12 +7,12 @@ The goal of `TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronoun
 - visualize per-course charts
 - provide an interactive graphical interface for the users to play the charts
 
-`TNTNT` is still in an early stage. I will not accept any external code contribution until I release the first desktop application (after finishing [stage 2](#stage-2)).
+`TNTNT` is still in an early stage. I will not accept any external code contribution until I release the first desktop application ([stage 2](#stage-2)).
 
 ## Table of Contents
 
 - [Motivation](#motivation)
-- [Known Bugs](#known-bugs)
+- [Known Bug(s)](#known-bugs)
 - [Dependencies](#dependencies)
 - [Road Map](#road-map)
     - [Stage 1: Visualizing](#stage-1) **(in progress)**
@@ -35,9 +35,8 @@ Why `Rust`? `Rust` is/has:
 - thread-safe
 - fast
 
-## Known Bugs
+## Known Bug(s)
 
-- May not be able to parse Dan and Taiko Tower charts correctly (untested)
 - Doesn't parse `STYLE:Double` charts correctly (fixing)
 
 ## Dependencies

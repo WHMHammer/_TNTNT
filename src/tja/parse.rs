@@ -72,6 +72,13 @@ pub fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
             BARLINEON => {
                 context.flag_barline = true;
             }
+            NEXTSONG(_) => {
+                context.offset = 0.0;
+                events.push(course::Event {
+                    offset: 0.0,
+                    event_type,
+                });
+            }
             _ => {
                 events.push(course::Event {
                     offset: context.offset,
@@ -109,7 +116,7 @@ impl Chart {
     pub fn parse_from_path<P>(
         path: P,
         encoding: Option<&'static encoding_rs::Encoding>,
-        conf: &crate::conf::Conf,
+        conf: &crate::player::Conf,
         genre: Option<&String>,
     ) -> Option<Self>
     where
@@ -283,27 +290,15 @@ impl Chart {
                             course.meta.exam3 = course::meta::Exam::from_str(value);
                         }
                         "#START" => match value {
-                            // TODO: fix the issue that the initial barline is inserted regardless of whether there is a #BARLINEOFF before the first note
+                            // TODO: insert the initial barline when necessary
                             "p1" => {
                                 events = &mut course.p1;
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::BARLINE,
-                                });
                             }
                             "p2" => {
                                 events = &mut course.p2;
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::BARLINE,
-                                });
                             }
                             _ => {
                                 events = &mut course.p0;
-                                events.push(course::Event {
-                                    offset: 0.0,
-                                    event_type: course::event::BARLINE,
-                                });
                             }
                         },
                         "#END" => {

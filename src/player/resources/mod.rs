@@ -1,5 +1,5 @@
-pub mod sound;
-pub use sound::Sounds;
+pub mod sounds;
+pub use sounds::Sounds;
 
 /*pub struct Resources {
     sounds: Sounds,
