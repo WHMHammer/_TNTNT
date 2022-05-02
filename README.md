@@ -41,6 +41,8 @@
 
 ## 依赖
 
+你当然须要[安装Rust](https://www.rust-lang.org/zh-CN/tools/install)。
+
 - Linux
     - `pkg-config`
     - `libasound2-dev`（Debian系）或`alsa-lib-devel`（红帽系）

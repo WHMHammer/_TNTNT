@@ -1,8 +1,8 @@
-use super::*;
+use super::course;
 use crate::i18n;
 
 #[derive(PartialEq)]
-pub enum State {
+enum State {
     Comment,
     MetaKey,
     MetaValue,
@@ -12,7 +12,7 @@ pub enum State {
 }
 
 #[derive(Clone)]
-pub struct Context {
+struct Context {
     pub measure: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
     pub bpm: f64,
     pub flag_barline: bool,
@@ -32,11 +32,37 @@ impl Default for Context {
     }
 }
 
+#[derive(PartialEq)]
+enum Branch {
+    None,
+    N,
+    E,
+    M,
+}
+
+impl Branch {
+    fn get_events_mut<'c>(&self, c: &'c mut super::Course) -> &'c mut Vec<course::Event> {
+        if *self == Self::None {
+            &mut c.events
+        } else if let course::event::BRANCH(branches) = &mut c.events.last_mut().unwrap().event_type
+        {
+            match self {
+                Self::N => &mut branches.n,
+                Self::E => &mut branches.e,
+                Self::M => &mut branches.m,
+                Self::None => unreachable!(),
+            }
+        } else {
+            panic!()
+        }
+    }
+}
+
 fn second_per_note(context: &Context) -> f64 {
     240.0 / context.bpm * context.measure.0 / context.measure.1 / context.measure_notes_count as f64
 }
 
-pub fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
+fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
     measure: &mut std::collections::VecDeque<course::event::EventType>,
     events: &mut Vec<course::Event>,
     context: &mut Context,
@@ -112,7 +138,7 @@ pub fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
     context.measure_notes_count = 0;
 }
 
-impl Chart {
+impl super::Chart {
     pub fn parse_from_path<P>(
         path: P,
         encoding: Option<&'static encoding_rs::Encoding>,
@@ -154,15 +180,14 @@ impl Chart {
             let mut index_low = 0;
             let mut index_high = 0;
             let mut key = "";
-            let mut course = Course::default(); // the current course working on; moved to the chart at the #END
-            let mut events = &mut course.p0; // the current event buffer working on; switched at the #START [p1|p2]
-            let mut course_events_ptr: *mut Vec<course::Event> = std::ptr::null_mut(); // events will point to the event buffer when #BRANCHSTART; this ptr records the course events to be written back at #BRANCHEND
-            let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to the events at the end of the measures ("," in tja)
             let mut flag_eof = false; // flag: end of file
             let mut state = State::MetaKey; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
-            let mut context = Context::default(); // bpm, etc.
+            let mut context = Context::default();
             let mut chart_context = Context::default(); // the initial context of the chart; cloned back to context at the #END
             let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to context when start parsing another branch
+            let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to the chart at the end of the measures ("," in tja)
+            let mut course = course::meta::Course::default(); // the current course working on
+            let mut branch = Branch::None; // the current branch working on
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
                     i = index;
@@ -236,7 +261,7 @@ impl Chart {
                             chart.meta.genre = Some(value.to_string());
                         }
                         "SCOREMODE" => {
-                            if let Some(scoremode) = meta::ScoreMode::from_str(value) {
+                            if let Some(scoremode) = super::meta::ScoreMode::from_str(value) {
                                 chart.meta.scoremode = scoremode;
                             }
                         }
@@ -250,61 +275,56 @@ impl Chart {
                         }
                         "COURSE" => {
                             if let Some(c) = course::meta::Course::from_str(value) {
-                                course.meta.course = c;
+                                course = c;
                             }
                         }
                         "LEVEL" => {
                             if let Ok(level) = value.parse() {
-                                course.meta.level = level;
+                                chart.get_mut(course).meta.level = level;
                             }
                         }
                         "BALLOON" => {
                             for value in value.split(',') {
                                 if let Ok(value) = value.parse() {
-                                    course.meta.balloon.push(value);
+                                    chart.get_mut(course).meta.balloon.push(value);
                                 }
                             }
                         }
                         "SCOREINIT" => {
                             if let Ok(scoreinit) = value.parse() {
-                                course.meta.scoreinit = scoreinit;
+                                chart.get_mut(course).meta.scoreinit = scoreinit;
                             }
                         }
                         "SCOREDIFF" => {
                             if let Ok(scorediff) = value.parse() {
-                                course.meta.scorediff = scorediff;
+                                chart.get_mut(course).meta.scorediff = scorediff;
                             }
                         }
                         "STYLE" => {
                             if let Some(style) = course::meta::Style::from_str(value) {
-                                course.meta.style = style;
+                                chart.get_mut(course).meta.style = style;
                             }
                         }
                         "EXAM1" => {
-                            course.meta.exam1 = course::meta::Exam::from_str(value);
+                            chart.get_mut(course).meta.exam1 = course::meta::Exam::from_str(value);
                         }
                         "EXAM2" => {
-                            course.meta.exam2 = course::meta::Exam::from_str(value);
+                            chart.get_mut(course).meta.exam2 = course::meta::Exam::from_str(value);
                         }
                         "EXAM3" => {
-                            course.meta.exam3 = course::meta::Exam::from_str(value);
+                            chart.get_mut(course).meta.exam3 = course::meta::Exam::from_str(value);
                         }
-                        "#START" => match value {
+                        "#START" => {
                             // TODO: insert the initial barline when necessary
-                            "p1" => {
-                                events = &mut course.p1;
-                            }
-                            "p2" => {
-                                events = &mut course.p2;
-                            }
-                            _ => {
-                                events = &mut course.p0;
-                            }
-                        },
+                        }
                         "#END" => {
-                            // TODO: handle STYLE:Double correctly
-                            move_events::<false>(&mut measure, events, &mut context);
+                            move_events::<false>(
+                                &mut measure,
+                                &mut chart.get_mut(course).events,
+                                &mut context,
+                            );
                             {
+                                let course = chart.get(course).unwrap();
                                 println!("{:?}", course.meta.course);
                                 use std::io::Write;
                                 let mut path = Vec::new();
@@ -314,32 +334,6 @@ impl Chart {
                                         .unwrap();
                                 write!(&mut file, "{:#?}", course).unwrap();
                             }
-                            use course::meta::Course::*;
-                            match course.meta.course {
-                                Easy => {
-                                    chart.easy_course = Some(std::mem::take(&mut course));
-                                }
-                                Normal => {
-                                    chart.normal_course = Some(std::mem::take(&mut course));
-                                }
-                                Hard => {
-                                    chart.hard_course = Some(std::mem::take(&mut course));
-                                }
-                                Oni => {
-                                    chart.oni_course = Some(std::mem::take(&mut course));
-                                }
-                                Edit => {
-                                    chart.edit_course = Some(std::mem::take(&mut course));
-                                }
-                                Dan => {
-                                    chart.dan_course = Some(std::mem::take(&mut course));
-                                }
-                                Tower => {
-                                    chart.tower_course = Some(std::mem::take(&mut course));
-                                }
-                            }
-                            events = &mut course.p0;
-                            course_events_ptr = std::ptr::null_mut();
                             context = chart_context.clone();
                         }
                         "#MEASURE" => {
@@ -378,71 +372,46 @@ impl Chart {
                         "#BARLINEON" => measure.push_back(course::event::BARLINEON),
                         "#BRANCHSTART" => {
                             if let Some(branches) = course::event::Branches::from_str(value) {
-                                move_events::<false>(&mut measure, events, &mut context);
-                                unsafe {
-                                    // cannot rewrite with safe code because course_events is (indirectly) owned by events, so we can't have &mut for both
-                                    if let Some(course_events) = course_events_ptr.as_mut() {
-                                        // handles the case where this #BRANCHSTART directly follows the previous one
-                                        course_events.push(course::Event {
-                                            offset: context.offset,
-                                            event_type: course::event::BRANCH(branches),
-                                        });
-                                        if let course::event::BRANCH(branches) =
-                                            &mut course_events.last_mut().unwrap().event_type
-                                        {
-                                            events = &mut branches.n;
-                                        } else {
-                                            unreachable!()
-                                        }
-                                    } else {
-                                        // handles the case where this #BRANCHSTART does not directly follow another one
-                                        events.push(course::Event {
-                                            offset: context.offset,
-                                            event_type: course::event::BRANCH(branches),
-                                        });
-                                        course_events_ptr = &mut *events;
-                                        if let course::event::BRANCH(branches) =
-                                            &mut course_events_ptr
-                                                .as_mut()
-                                                .unwrap()
-                                                .last_mut()
-                                                .unwrap()
-                                                .event_type
-                                        {
-                                            events = &mut branches.n;
-                                        } else {
-                                            unreachable!()
-                                        }
-                                    }
-                                }
+                                let course = chart.get_mut(course);
+                                move_events::<false>(
+                                    &mut measure,
+                                    branch.get_events_mut(course),
+                                    &mut context,
+                                );
+                                course.events.push(course::Event {
+                                    offset: context.offset,
+                                    event_type: course::event::BRANCH(branches),
+                                });
+                                branch = Branch::N;
                                 branchstart_context = context.clone();
                             }
                         }
-                        "#N" | "#E" | "#M" => unsafe {
-                            if let Some(course_events) = course_events_ptr.as_mut() {
+                        "#N" | "#E" | "#M" => {
+                            if branch != Branch::None {
+                                move_events::<false>(
+                                    &mut measure,
+                                    branch.get_events_mut(chart.get_mut(course)),
+                                    &mut context,
+                                );
+                                branch = match key {
+                                    "#N" => Branch::N,
+                                    "#E" => Branch::E,
+                                    "#M" => Branch::M,
+                                    _ => unreachable!(),
+                                };
                                 context = branchstart_context.clone();
-                                move_events::<false>(&mut measure, events, &mut context);
-                                if let course::event::BRANCH(branches) =
-                                    &mut course_events.last_mut().unwrap().event_type
-                                {
-                                    events = match key {
-                                        "#N" => &mut branches.n,
-                                        "#E" => &mut branches.e,
-                                        "#M" => &mut branches.m,
-                                        _ => unreachable!(),
-                                    };
-                                } else {
-                                    unreachable!();
-                                }
                             }
-                        },
-                        "#BRANCHEND" => unsafe {
-                            if let Some(course_events) = course_events_ptr.as_mut() {
-                                move_events::<false>(&mut measure, events, &mut context);
-                                events = course_events;
-                                course_events_ptr = std::ptr::null_mut();
+                        }
+                        "#BRANCHEND" => {
+                            if branch != Branch::None {
+                                move_events::<false>(
+                                    &mut measure,
+                                    &mut chart.get_mut(course).events,
+                                    &mut context,
+                                );
+                                branch = Branch::None;
                             }
-                        },
+                        }
                         "#SECTION" => measure.push_back(course::event::SECTION), // TODO: investigate into its relation with #BRANCHSTART
                         "#LYRIC" => {
                             if !value.is_empty() {
@@ -520,7 +489,19 @@ impl Chart {
                         }
                         ',' => {
                             if state == State::Measure || previous_character == '\n' {
-                                move_events::<true>(&mut measure, events, &mut context);
+                                if branch == Branch::None {
+                                    move_events::<true>(
+                                        &mut measure,
+                                        &mut chart.get_mut(course).events,
+                                        &mut context,
+                                    );
+                                } else {
+                                    move_events::<true>(
+                                        &mut measure,
+                                        branch.get_events_mut(chart.get_mut(course)),
+                                        &mut context,
+                                    );
+                                }
                             }
                         }
                         _ => {}

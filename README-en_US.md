@@ -41,6 +41,8 @@ Why `Rust`? `Rust` is/has:
 
 ## Dependencies
 
+You need to [install Rust](https://www.rust-lang.org/tools/install), of course.
+
 - Linux
     - `pkg-config`
     - `libasound2-dev` (Debian-based) or `alsa-lib-devel` (RHEL-based)
