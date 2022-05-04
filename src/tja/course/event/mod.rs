@@ -1,7 +1,7 @@
 pub mod branch;
 pub mod nextsong;
-pub use branch::Branches;
-pub use nextsong::Nextsong;
+use branch::Branches;
+use nextsong::Nextsong;
 
 pub enum EventType {
     Empty,    // 0
@@ -29,10 +29,10 @@ pub enum EventType {
     LEVELHOLD,
     NEXTSONG(Nextsong),
 }
-pub use EventType::*;
 
 impl std::fmt::Debug for EventType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use EventType::*;
         match self {
             Empty => write!(f, "0"),
             Don => write!(f, "1"),
@@ -69,6 +69,7 @@ pub struct Event {
 
 impl std::fmt::Debug for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use EventType::*;
         match self.event_type {
             BRANCH(_) => write!(f, "{:?}", self.event_type),
             NEXTSONG(_) => write!(f, "\n{:?}", self.event_type),

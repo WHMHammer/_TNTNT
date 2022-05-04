@@ -1,3 +1,5 @@
+use super::Event;
+
 #[allow(non_camel_case_types)]
 pub enum Thresholds {
     r(u8, u8),
@@ -19,9 +21,9 @@ impl std::fmt::Debug for Thresholds {
 
 pub struct Branches {
     pub thresholds: Thresholds,
-    pub n: Vec<super::Event>,
-    pub e: Vec<super::Event>,
-    pub m: Vec<super::Event>,
+    pub n: Vec<Event>,
+    pub e: Vec<Event>,
+    pub m: Vec<Event>,
 }
 
 impl Branches {

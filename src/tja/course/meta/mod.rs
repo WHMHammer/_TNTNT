@@ -1,7 +1,7 @@
 pub mod course;
 pub mod exam;
 pub mod style;
-pub use {course::Course, exam::Exam, style::Style};
+use {course::Course, exam::Exam};
 
 pub struct Meta {
     pub course: Course,

@@ -1,7 +1,7 @@
 pub mod event;
 pub mod meta;
-pub use event::Event;
-pub use meta::Meta;
+use event::Event;
+use meta::Meta;
 
 pub struct Course {
     pub meta: Meta,

@@ -1,78 +1,79 @@
-mod i18n;
 mod application;
+mod i18n;
 mod tja;
+use application::audio::Audio;
+use std::time::{Duration, Instant};
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
-    let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
-
-    let conf = application::Conf::default();
-    let chart =
-        tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
-            .unwrap();
-    let course = chart.oni_course.as_ref().unwrap();
-    let events = &course.p0;
-    println!("{:?}", course.meta);
-
-    let sounds = application::resources::Sounds::load_from_directory("System/Switch-Style/Sounds/"); // TJAPlayer3-style resources
+    let conf = application::conf::Conf::default();
+    let resources = application::resources::Resources::load_from_directory("System/Switch-Style/"); // TJAPlayer3-style resources
     let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
     let sink = rodio::Sink::try_new(&stream_handle).unwrap();
 
-    if course.meta.course != tja::course::meta::Course::Dan {
-        if let Some(wave) = &chart.meta.wave {
-            if let Some(directory) = tja_path.parent() {
-                if let Ok(file) = std::fs::File::open(directory.join(wave)) {
-                    if let Ok(decoder) = rodio::Decoder::new(std::io::BufReader::new(file)) {
-                        sink.append(decoder);
-                    }
-                }
-            }
-        }
-    }
+    let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
+    let directory = tja_path.parent().unwrap();
+    let chart =
+        tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
+            .unwrap();
+    let course = chart.edit_course.as_ref().unwrap();
+    let events = &course.p0;
+    println!("{:?}", course.meta);
 
-    let mut t = std::time::Instant::now();
-    if chart.meta.offset < 0.0 {
-        let offset = std::time::Duration::from_secs_f64(-chart.meta.offset);
-        t += offset;
-        std::thread::sleep(offset);
-    } else {
-        t -= std::time::Duration::from_secs_f64(chart.meta.offset);
+    if course.meta.course != tja::course::meta::course::Course::Dan {
+        sink.append(
+            Audio::load_from_path(directory.join(chart.meta.wave.as_ref().unwrap()))
+                .unwrap()
+                .decoder()
+                .unwrap(),
+        );
     }
     let mut flag_balloon = false;
+    let mut t;
+    if chart.meta.offset < 0.0 {
+        t = Instant::now() + Duration::from_secs_f64(-chart.meta.offset);
+        while t.elapsed().as_nanos() <= 0 {}
+    } else {
+        t = Instant::now() - Duration::from_secs_f64(chart.meta.offset);
+    }
     for event in events {
-        use tja::course::event::*;
+        use application::resources::sounds::Sound;
+        use tja::course::event::EventType::*;
         match &event.event_type {
             Don | DON => {
-                while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                sounds.play(&stream_handle, application::resources::sounds::Don);
+                while t.elapsed().as_secs_f64() < event.offset {}
+                resources.sounds.play(&stream_handle, Sound::Don);
             }
             Ka | KA => {
-                while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                sounds.play(&stream_handle, application::resources::sounds::Ka);
+                while t.elapsed().as_secs_f64() < event.offset {}
+                resources.sounds.play(&stream_handle, Sound::Ka);
             }
+            Drumroll | DRUMROLL => while t.elapsed().as_secs_f64() < event.offset {},
             Balloon | BALLOON => {
+                while t.elapsed().as_secs_f64() < event.offset {}
                 flag_balloon = true;
             }
             End => loop {
                 let millis = t.elapsed().as_millis();
-                if millis as f64 / 1000.0 >= event.offset - 0.1 {
+                if millis as f64 / 1000.0 >= event.offset {
                     if flag_balloon {
-                        sounds.play(&stream_handle, application::resources::sounds::Balloon);
+                        resources.sounds.play(&stream_handle, Sound::Balloon);
                         flag_balloon = false;
                     }
                     break;
                 }
-                if millis % 100 == 0 {
-                    sounds.play(&stream_handle, application::resources::sounds::Don);
+                if millis % 80 == 0 {
+                    resources.sounds.play(&stream_handle, Sound::Don);
                 }
             },
             BRANCH(branches) => {
+                use tja::course::event::branch::Thresholds::*;
                 for event in match branches.thresholds {
-                    branch::Thresholds::r(_, _) => {
+                    r(_, _) => {
                         println!("#M");
                         &branches.m
                     }
-                    branch::Thresholds::p(e_threshold, m_threshold) => {
+                    p(e_threshold, m_threshold) => {
                         if m_threshold <= 100.0 {
                             println!("#M");
                             &branches.m
@@ -87,27 +88,29 @@ fn main() {
                 } {
                     match event.event_type {
                         Don | DON => {
-                            while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                            sounds.play(&stream_handle, application::resources::sounds::Don);
+                            while t.elapsed().as_secs_f64() < event.offset {}
+                            resources.sounds.play(&stream_handle, Sound::Don);
                         }
                         Ka | KA => {
-                            while t.elapsed().as_millis() as f64 / 1000.0 < event.offset {}
-                            sounds.play(&stream_handle, application::resources::sounds::Ka);
+                            while t.elapsed().as_secs_f64() < event.offset {}
+                            resources.sounds.play(&stream_handle, Sound::Ka);
                         }
+                        Drumroll | DRUMROLL => while t.elapsed().as_secs_f64() < event.offset {},
                         Balloon | BALLOON => {
+                            while t.elapsed().as_secs_f64() < event.offset {}
                             flag_balloon = true;
                         }
                         End => loop {
                             let millis = t.elapsed().as_millis();
-                            if millis as f64 / 1000.0 >= event.offset - 0.1 {
+                            if millis as f64 / 1000.0 >= event.offset {
                                 if flag_balloon {
-                                    sounds.play(&stream_handle, application::resources::sounds::Balloon);
+                                    resources.sounds.play(&stream_handle, Sound::Balloon);
                                     flag_balloon = false;
                                 }
                                 break;
                             }
-                            if millis % 100 == 0 {
-                                sounds.play(&stream_handle, application::resources::sounds::Don);
+                            if millis % 80 == 0 {
+                                resources.sounds.play(&stream_handle, Sound::Don);
                             }
                         },
                         _ => {}
@@ -117,15 +120,14 @@ fn main() {
                 continue;
             }
             NEXTSONG(nextsong) => {
-                if let Some(directory) = tja_path.parent() {
-                    if let Ok(file) = std::fs::File::open(directory.join(&nextsong.wave)) {
-                        if let Ok(decoder) = rodio::Decoder::new(std::io::BufReader::new(file)) {
-                            sink.sleep_until_end();
-                            sink.append(decoder);
-                            t = std::time::Instant::now();
-                        }
-                    }
-                }
+                sink.sleep_until_end();
+                sink.append(
+                    Audio::load_from_path(directory.join(&nextsong.wave))
+                        .unwrap()
+                        .decoder()
+                        .unwrap(),
+                );
+                t = Instant::now();
             }
             _ => {}
         }

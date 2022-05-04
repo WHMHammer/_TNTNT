@@ -41,6 +41,7 @@ pub struct Exam {
 impl Exam {
     pub fn from_str(slice: &str) -> Option<Self> {
         let mut values = slice.split(',');
+        use Condition::*;
         match values.next() {
             Some("g") => {
                 if let Some(red_threshold) = values.next() {
@@ -50,13 +51,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::g(read_threshold, gold_threshold),
+                                            condition: g(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::g(read_threshold, gold_threshold),
+                                            condition: g(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -75,19 +76,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::jp(
-                                                read_threshold,
-                                                gold_threshold,
-                                            ),
+                                            condition: jp(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::jp(
-                                                read_threshold,
-                                                gold_threshold,
-                                            ),
+                                            condition: jp(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -106,19 +101,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::jg(
-                                                read_threshold,
-                                                gold_threshold,
-                                            ),
+                                            condition: jg(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::jg(
-                                                read_threshold,
-                                                gold_threshold,
-                                            ),
+                                            condition: jg(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -137,19 +126,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::jb(
-                                                read_threshold,
-                                                gold_threshold,
-                                            ),
+                                            condition: jb(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::jb(
-                                                read_threshold,
-                                                gold_threshold,
-                                            ),
+                                            condition: jb(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -168,13 +151,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::s(read_threshold, gold_threshold),
+                                            condition: s(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::s(read_threshold, gold_threshold),
+                                            condition: s(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -193,13 +176,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::r(read_threshold, gold_threshold),
+                                            condition: r(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::r(read_threshold, gold_threshold),
+                                            condition: r(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -218,13 +201,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::h(read_threshold, gold_threshold),
+                                            condition: h(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::h(read_threshold, gold_threshold),
+                                            condition: h(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }
@@ -243,13 +226,13 @@ impl Exam {
                                 match values.next() {
                                     Some("m") => {
                                         return Some(Self {
-                                            condition: Condition::c(read_threshold, gold_threshold),
+                                            condition: c(read_threshold, gold_threshold),
                                             scope: Scope::m,
                                         });
                                     }
                                     Some("l") => {
                                         return Some(Self {
-                                            condition: Condition::c(read_threshold, gold_threshold),
+                                            condition: c(read_threshold, gold_threshold),
                                             scope: Scope::l,
                                         });
                                     }

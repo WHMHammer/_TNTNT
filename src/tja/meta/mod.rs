@@ -1,5 +1,5 @@
-pub mod score_mode;
-pub use score_mode::ScoreMode;
+pub mod scoremode;
+use scoremode::Scoremode;
 
 use crate::i18n::I18nString;
 
@@ -10,7 +10,7 @@ pub struct Meta {
     pub offset: f64,
     pub demostart: f64,
     pub genre: Option<String>,
-    pub scoremode: ScoreMode,
+    pub scoremode: Scoremode,
     pub life: u8,
     pub bgmovie: Option<String>,
 }
@@ -24,7 +24,7 @@ impl Default for Meta {
             offset: 0.0,
             demostart: 0.0,
             genre: None,
-            scoremode: ScoreMode::default(),
+            scoremode: Scoremode::default(),
             life: 0,
             bgmovie: None,
         }

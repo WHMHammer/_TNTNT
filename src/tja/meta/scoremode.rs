@@ -1,11 +1,11 @@
 #[derive(Clone, Copy)]
-pub enum ScoreMode {
+pub enum Scoremode {
     Mode0, // AC 1 to AC 7
     Mode1, // AC 8 to AC 14
     Mode2, // AC 0
 }
 
-impl ScoreMode {
+impl Scoremode {
     pub fn from_str(slice: &str) -> Option<Self> {
         match slice {
             "0" => Some(Self::Mode0),
@@ -16,13 +16,13 @@ impl ScoreMode {
     }
 }
 
-impl Default for ScoreMode {
+impl Default for Scoremode {
     fn default() -> Self {
         Self::Mode1
     }
 }
 
-impl std::fmt::Debug for ScoreMode {
+impl std::fmt::Debug for Scoremode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Mode0 => write!(f, "0"),

@@ -41,15 +41,19 @@
 
 ## 依赖
 
-你当然须要[安装Rust](https://www.rust-lang.org/zh-CN/tools/install)。
+你显然需要[安装Rust](https://www.rust-lang.org/zh-CN/tools/install)。
 
-- Linux
+- Linux (Ubuntu)
+    - `cmake`
     - `pkg-config`
-    - `libasound2-dev`（Debian系）或`alsa-lib-devel`（红帽系）
+    - `libasound2-dev`
+    - `libxext-dev`
 - Windows
-    - （无）
+    - `cmake`
 - macOS
     - （尚未测试）
+
+接下来执行`cargo run --release`就行了。
 
 ## 路线图
 

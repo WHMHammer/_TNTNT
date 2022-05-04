@@ -43,13 +43,17 @@ Why `Rust`? `Rust` is/has:
 
 You need to [install Rust](https://www.rust-lang.org/tools/install), of course.
 
-- Linux
+- Linux (Ubuntu)
+    - `cmake`
     - `pkg-config`
-    - `libasound2-dev` (Debian-based) or `alsa-lib-devel` (RHEL-based)
+    - `libasound2-dev`
+    - `libxext-dev`
 - Windows
-    - (none)
+    - `cmake`
 - macOS
     - (never tested)
+
+You shall then run `cargo run --release`.
 
 ## Road Map
 
