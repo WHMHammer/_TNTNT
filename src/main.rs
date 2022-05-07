@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
     let conf = application::conf::Conf::default();
-    let resources = application::resources::Resources::load_from_directory("System/Switch-Style/"); // TJAPlayer3-style resources
+    let resources = application::resources::Resources::load_from_directory("System/SimpleStyle/"); // TJAPlayer3-style resources
     let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
     let sink = rodio::Sink::try_new(&stream_handle).unwrap();
 
@@ -16,7 +16,7 @@ fn main() {
     let chart =
         tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
             .unwrap();
-    let course = chart.edit_course.as_ref().unwrap();
+    let course = chart.oni_course.as_ref().unwrap();
     let events = &course.p0;
     println!("{:?}", course.meta);
 
@@ -29,6 +29,7 @@ fn main() {
         );
     }
     let mut flag_balloon = false;
+    let mut flag_rolled = false;
     let mut t;
     if chart.meta.offset < 0.0 {
         t = Instant::now() + Duration::from_secs_f64(-chart.meta.offset);
@@ -62,8 +63,13 @@ fn main() {
                     }
                     break;
                 }
-                if millis % 80 == 0 {
-                    resources.sounds.play(&stream_handle, Sound::Don);
+                if millis % 90 == 0 {
+                    if !flag_rolled {
+                        resources.sounds.play(&stream_handle, Sound::Don);
+                        flag_rolled = true;
+                    }
+                } else {
+                    flag_rolled = false;
                 }
             },
             BRANCH(branches) => {
@@ -109,8 +115,13 @@ fn main() {
                                 }
                                 break;
                             }
-                            if millis % 80 == 0 {
-                                resources.sounds.play(&stream_handle, Sound::Don);
+                            if millis % 90 == 0 {
+                                if !flag_rolled {
+                                    resources.sounds.play(&stream_handle, Sound::Don);
+                                    flag_rolled = true;
+                                }
+                            } else {
+                                flag_rolled = false;
                             }
                         },
                         _ => {}

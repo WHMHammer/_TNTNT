@@ -1,12 +1,11 @@
 # rust
+/target
 _*.rs
 Cargo.lock
-/target
 
 # editor
 .vscode
 
-# test
-/System
-/*.tja
+# tests
+*.tja
 *.out
