@@ -1,7 +1,7 @@
 pub mod course;
 pub mod meta;
 mod parse;
-use course::Course;
+use course::{meta::course_name::CourseName, Course};
 use meta::Meta;
 
 #[derive(Default)]
@@ -17,8 +17,8 @@ pub struct Chart {
 }
 
 impl Chart {
-    pub fn get_course(&self, c: course::meta::course::Course) -> Option<&Course> {
-        use course::meta::course::Course::*;
+    pub fn get_course(&self, c: CourseName) -> Option<&Course> {
+        use CourseName::*;
         match c {
             Easy => self.easy_course.as_ref(),
             Normal => self.normal_course.as_ref(),
@@ -30,8 +30,8 @@ impl Chart {
         }
     }
 
-    pub fn get_course_mut(&mut self, c: course::meta::course::Course) -> &mut Course {
-        use course::meta::course::Course::*;
+    pub fn get_course_mut(&mut self, c: CourseName) -> &mut Course {
+        use CourseName::*;
         match c {
             Easy => {
                 if self.easy_course.is_none() {

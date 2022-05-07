@@ -1,10 +1,10 @@
-pub mod course;
+pub mod course_name;
 pub mod exam;
 pub mod style;
-use {course::Course, exam::Exam};
+use {course_name::CourseName, exam::Exam};
 
 pub struct Meta {
-    pub course: Course,
+    pub course: CourseName,
     pub level: u8,
     pub balloon: Vec<u8>,
     pub balloon_double: Vec<u8>,
@@ -20,7 +20,7 @@ pub struct Meta {
 impl Default for Meta {
     fn default() -> Self {
         Self {
-            course: Course::default(),
+            course: CourseName::default(),
             level: 0,
             balloon: Vec::new(),
             balloon_double: Vec::with_capacity(0),

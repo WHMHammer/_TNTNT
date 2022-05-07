@@ -3,6 +3,7 @@ mod i18n;
 mod tja;
 use application::audio::Audio;
 use std::time::{Duration, Instant};
+use tja::course::meta::course_name::CourseName;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
@@ -20,7 +21,8 @@ fn main() {
     let events = &course.p0;
     println!("{:?}", course.meta);
 
-    if course.meta.course != tja::course::meta::course::Course::Dan {
+    if let CourseName::Dan = course.meta.course {
+    } else {
         sink.append(
             Audio::load_from_path(directory.join(chart.meta.wave.as_ref().unwrap()))
                 .unwrap()

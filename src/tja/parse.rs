@@ -1,10 +1,9 @@
 use super::course;
 use super::meta::scoremode::Scoremode;
 use crate::i18n;
-use course::meta::exam::Exam;
 use course::{
     event::{branch::Branches, nextsong::Nextsong, Event, EventType},
-    meta::style::Style,
+    meta::{course_name::CourseName, exam::Exam, style::Style},
     Course,
 };
 
@@ -34,21 +33,23 @@ enum Player {
 }
 
 #[derive(Clone)]
-struct Context {
-    measure: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
+struct ParserContext {
+    time_signature: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
     bpm: f64,
     flag_barline: bool,
     measure_notes_count: u8,
     offset: f64,
-    course: course::meta::course::Course,
+    course: CourseName,
     branch: Branch,
     style: Style,
     player: Player,
 }
 
-impl Context {
+impl ParserContext {
     fn seconds_per_note(&self) -> f64 {
-        240.0 / self.bpm * self.measure.0 / self.measure.1 / self.measure_notes_count as f64
+        240.0 / self.bpm * self.time_signature.0
+            / self.time_signature.1
+            / self.measure_notes_count as f64
     }
 
     fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
@@ -71,7 +72,7 @@ impl Context {
                     self.offset += offset;
                 }
                 MEASURE(numerator, denominator) => {
-                    self.measure = (numerator as f64, denominator as f64);
+                    self.time_signature = (numerator as f64, denominator as f64);
                     offset = self.seconds_per_note();
                 }
                 BPMCHANGE(bpm) => {
@@ -106,7 +107,7 @@ impl Context {
             // an explicit measure with an ending comma
             if self.measure_notes_count == 0 {
                 // an empty measure
-                self.offset += 60.0 / self.bpm * self.measure.0 as f64;
+                self.offset += 60.0 / self.bpm * self.time_signature.0 as f64;
             }
             if self.flag_barline {
                 events.push(Event {
@@ -155,15 +156,15 @@ impl Context {
     }
 }
 
-impl Default for Context {
+impl Default for ParserContext {
     fn default() -> Self {
         Self {
-            measure: (4.0, 4.0),
+            time_signature: (4.0, 4.0),
             bpm: 120.0,
             flag_barline: true,
             measure_notes_count: 0,
             offset: 0.0,
-            course: course::meta::course::Course::default(),
+            course: CourseName::default(),
             branch: Branch::None,
             style: Style::default(),
             player: Player::P0,
@@ -215,9 +216,9 @@ impl super::Chart {
             let mut key = "";
             let mut flag_eof = false; // flag: end of file
             let mut state = State::MetaKey; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
-            let mut context = Context::default();
-            let mut chart_context = Context::default(); // the initial context of the chart; cloned back to `context` at the #END
-            let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
+            let mut context = ParserContext::default();
+            let mut chart_context = ParserContext::default(); // the initial context of the chart; cloned back to `context` at the #END
+            let mut branchstart_context = ParserContext::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
             let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to `chart` at the end of the measures ("," in tja)
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
@@ -305,7 +306,7 @@ impl super::Chart {
                             chart.meta.bgmovie = Some(value.to_string());
                         }
                         "COURSE" => {
-                            if let Some(c) = course::meta::course::Course::from_str(value) {
+                            if let Some(c) = CourseName::from_str(value) {
                                 chart.get_course_mut(c).meta.course = c;
                                 context.course = c;
                             }
