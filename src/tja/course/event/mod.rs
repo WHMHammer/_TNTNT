@@ -4,16 +4,17 @@ use branch::Branches;
 use nextsong::Nextsong;
 
 pub enum EventType {
-    Empty,    // 0
-    Don,      // 1
-    Ka,       // 2
-    DON,      // 3
-    KA,       // 4
-    Drumroll, // 5
-    DRUMROLL, // 6
-    Balloon,  // 7
-    End,      // 8
-    BALLOON,  // 9
+    Empty,      // 0
+    Don,        // 1
+    Ka,         // 2
+    DON,        // 3
+    KA,         // 4
+    Drumroll,   // 5
+    DRUMROLL,   // 6
+    Balloon,    // 7
+    End,        // 8
+    BALLOON,    // 9
+    MEASUREEND, // ,
     MEASURE(u8, u8),
     BPMCHANGE(f64),
     DELAY(f64),
@@ -22,7 +23,6 @@ pub enum EventType {
     GOGOEND,
     BARLINEOFF,
     BARLINEON,
-    BARLINE,
     BRANCH(Branches),
     SECTION,
     LYRIC(String),
@@ -44,6 +44,7 @@ impl std::fmt::Debug for EventType {
             Balloon => write!(f, "7"),
             End => write!(f, "8"),
             BALLOON => write!(f, "9"),
+            MEASUREEND => write!(f, ","),
             MEASURE(numerator, denominator) => write!(f, "#MEASURE {},{}", numerator, denominator),
             BPMCHANGE(bpm) => write!(f, "#BPMCHANGE {}", bpm),
             DELAY(delay) => write!(f, "#DELAY {}", delay),
@@ -52,7 +53,6 @@ impl std::fmt::Debug for EventType {
             GOGOEND => write!(f, "#GOGOEND"),
             BARLINEOFF => write!(f, "#BARLINEOFF"),
             BARLINEON => write!(f, "#BARLINEON"),
-            BARLINE => write!(f, ","),
             BRANCH(branches) => write!(f, "{:?}", branches),
             SECTION => write!(f, "#SECTION"),
             LYRIC(lyric) => write!(f, "#LYRIC {}", lyric),

@@ -33,10 +33,9 @@ enum Player {
 }
 
 #[derive(Clone)]
-struct ParserContext {
+struct Context {
     time_signature: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
     bpm: f64,
-    flag_barline: bool,
     measure_notes_count: u8,
     offset: f64,
     course: CourseName,
@@ -45,7 +44,7 @@ struct ParserContext {
     player: Player,
 }
 
-impl ParserContext {
+impl Context {
     fn seconds_per_note(&self) -> f64 {
         240.0 / self.bpm * self.time_signature.0
             / self.time_signature.1
@@ -82,12 +81,6 @@ impl ParserContext {
                 DELAY(delay) => {
                     self.offset += delay;
                 }
-                BARLINEOFF => {
-                    self.flag_barline = false;
-                }
-                BARLINEON => {
-                    self.flag_barline = true;
-                }
                 NEXTSONG(_) => {
                     self.offset = 0.0;
                     events.push(Event {
@@ -109,20 +102,16 @@ impl ParserContext {
                 // an empty measure
                 self.offset += 60.0 / self.bpm * self.time_signature.0 as f64;
             }
-            if self.flag_barline {
-                events.push(Event {
-                    offset: self.offset,
-                    event_type: BARLINE,
-                });
-            }
+            events.push(Event {
+                offset: self.offset,
+                event_type: MEASUREEND,
+            });
         } else if self.measure_notes_count != 0 {
             // an implicit measure without an ending comma
-            if self.flag_barline {
-                events.push(Event {
-                    offset: self.offset,
-                    event_type: BARLINE,
-                });
-            }
+            events.push(Event {
+                offset: self.offset,
+                event_type: MEASUREEND,
+            });
         }
         // otherwise not a measure, but just some commands; no need to increase the offset
         self.measure_notes_count = 0;
@@ -156,12 +145,11 @@ impl ParserContext {
     }
 }
 
-impl Default for ParserContext {
+impl Default for Context {
     fn default() -> Self {
         Self {
             time_signature: (4.0, 4.0),
             bpm: 120.0,
-            flag_barline: true,
             measure_notes_count: 0,
             offset: 0.0,
             course: CourseName::default(),
@@ -216,9 +204,9 @@ impl super::Chart {
             let mut key = "";
             let mut flag_eof = false; // flag: end of file
             let mut state = State::MetaKey; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
-            let mut context = ParserContext::default();
-            let mut chart_context = ParserContext::default(); // the initial context of the chart; cloned back to `context` at the #END
-            let mut branchstart_context = ParserContext::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
+            let mut context = Context::default();
+            let mut chart_context = Context::default(); // the initial context of the chart; cloned back to `context` at the #END
+            let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
             let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to `chart` at the end of the measures ("," in tja)
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {

@@ -9,11 +9,15 @@ The goal of `TNTNT` (**T**NTNT is **N**ot **T**aiko **n**o **T**atsujin, pronoun
 
 `TNTNT` is still in an early stage. I will not accept any external code contribution until I release the first desktop application ([stage 2](#stage-2)).
 
+Check the [license](LICENSE.md) file for permissions.
+
+Note:
+- some subdirectories have their own license files.
+
 ## Table of Contents
 
 - [Motivation](#motivation)
 - [Known Bug(s)](#known-bugs)
-- [Dependencies](#dependencies)
 - [Road Map](#road-map)
     - [Stage 1: Visualizing](#stage-1) **(in progress)**
     - [Stage 0: Parsing](#stage-0) (finished)
@@ -38,22 +42,6 @@ Why `Rust`? `Rust` is/has:
 ## Known Bug(s)
 
 - (None)
-
-## Dependencies
-
-You need to [install Rust](https://www.rust-lang.org/tools/install), of course.
-
-- Linux (Ubuntu)
-    - `cmake`
-    - `pkg-config`
-    - `libasound2-dev`
-    - `libxext-dev`
-- Windows
-    - `cmake`
-- macOS
-    - (never tested)
-
-You shall then run `cargo run --release`.
 
 ## Road Map
 

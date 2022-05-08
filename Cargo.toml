@@ -12,6 +12,4 @@ categories = ["games"]
 
 [dependencies]
 encoding_rs = "*"
-rand = "*"
 rodio = { version = "*", features = ["symphonia-aac", "symphonia-isomp4"] }
-sdl2 = { version = "*", features = ["bundled"] }

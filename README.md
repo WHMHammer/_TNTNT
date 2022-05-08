@@ -9,11 +9,16 @@
 
 `TNTNT`目前仍在开发的早期阶段。我在发布第一个桌面应用（[第二阶段](#stage-2)完成）前不会接受外部的代码贡献。
 
+请查看[证书](LICENSE.md)文件（英文）以了解本项目的许可。
+
+注意：
+- 证书有非官方中文[翻译](https://jxself.org/translations/gpl-3.zh.shtml)（仅[原证书](LICENSE.md)具有法律效力）
+- 部分子目录有它们自己的证书文件。
+
 ## 目录
 
 - [动机](#动机)
 - [已知问题](#已知问题)
-- [依赖](#依赖)
 - [路线图](#路线图)
     - [第一阶段：图形化谱面](#stage-1)**（开发中）**
     - [第零阶段：解析](#stage-0)（已完成）
@@ -38,22 +43,6 @@
 ## 已知问题
 
 - （暂无）
-
-## 依赖
-
-你显然需要[安装Rust](https://www.rust-lang.org/zh-CN/tools/install)。
-
-- Linux (Ubuntu)
-    - `cmake`
-    - `pkg-config`
-    - `libasound2-dev`
-    - `libxext-dev`
-- Windows
-    - `cmake`
-- macOS
-    - （尚未测试）
-
-接下来执行`cargo run --release`就行了。
 
 ## 路线图
 
