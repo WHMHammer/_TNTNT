@@ -10,11 +10,10 @@ use course::{
 #[derive(PartialEq)]
 enum State {
     Comment,
-    MetaKey,
     MetaValue,
     CommandKey,
     CommandValue,
-    Measure,
+    Notes,
 }
 
 #[derive(Clone, PartialEq)]
@@ -63,7 +62,8 @@ impl Context {
                 Empty => {
                     self.offset += offset;
                 }
-                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON => {
+                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON | DualDON
+                | DualKA | Bomb | ADLIB | PURPLE => {
                     events.push(Event {
                         offset: self.offset,
                         event_type,
@@ -203,7 +203,7 @@ impl super::Chart {
             let mut index_high = 0;
             let mut key = "";
             let mut flag_eof = false; // flag: end of file
-            let mut state = State::MetaKey; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
+            let mut state = State::Notes; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
             let mut context = Context::default();
             let mut chart_context = Context::default(); // the initial context of the chart; cloned back to `context` at the #END
             let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
@@ -476,16 +476,46 @@ impl super::Chart {
                         "#LEVELHOLD" => measure.push_back(EventType::LEVELHOLD),
                         "#NEXTSONG" => {
                             if let Some(nextsong) = Nextsong::from_str(value) {
-                                measure.push_back(EventType::NEXTSONG(nextsong))
+                                measure.push_back(EventType::NEXTSONG(nextsong));
                             }
                         }
-                        _ => {}
+                        _ => {
+                            if state == State::Notes && key != "" {
+                                for character in key.chars() {
+                                    if character == ',' {
+                                        context.move_events::<true>(
+                                            &mut measure,
+                                            context.get_events_mut(
+                                                chart.get_course_mut(context.course),
+                                            ),
+                                        );
+                                    } else {
+                                        use EventType::*;
+                                        measure.push_back(match character {
+                                            '1' => Don,
+                                            '2' => Ka,
+                                            '3' => DON,
+                                            '4' => KA,
+                                            '5' => Drumroll,
+                                            '6' => DRUMROLL,
+                                            '7' => Balloon,
+                                            '8' => End,
+                                            '9' => BALLOON,
+                                            'A' => DualDON,
+                                            'B' => DualKA,
+                                            'C' => Bomb,
+                                            'F' => ADLIB,
+                                            'G' => PURPLE,
+                                            _ => Empty,
+                                        });
+                                        context.measure_notes_count += 1;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    /*if !key.is_empty() {
-                        println!("{}\t{}", key, value);
-                    }*/
                     index_low = i + 1;
-                    state = State::MetaKey;
+                    state = State::Notes;
                     key = "";
                 } else if state != State::Comment {
                     match character {
@@ -496,7 +526,7 @@ impl super::Chart {
                             }
                         }
                         ':' => {
-                            if state == State::MetaKey {
+                            if state == State::Notes {
                                 key = &text[index_low..i];
                                 index_low = i + 1;
                                 state = State::MetaValue;
@@ -516,36 +546,6 @@ impl super::Chart {
                                 key = &text[index_low..i];
                                 index_low = i + 1;
                                 state = State::CommandValue;
-                            }
-                        }
-                        '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                            if previous_character == '\n' {
-                                state = State::Measure;
-                            }
-                            if state == State::Measure {
-                                use EventType::*;
-                                measure.push_back(match character {
-                                    '0' => Empty,
-                                    '1' => Don,
-                                    '2' => Ka,
-                                    '3' => DON,
-                                    '4' => KA,
-                                    '5' => Drumroll,
-                                    '6' => DRUMROLL,
-                                    '7' => Balloon,
-                                    '8' => End,
-                                    '9' => BALLOON,
-                                    _ => unreachable!(),
-                                });
-                                context.measure_notes_count += 1;
-                            }
-                        }
-                        ',' => {
-                            if state == State::Measure || previous_character == '\n' {
-                                context.move_events::<true>(
-                                    &mut measure,
-                                    context.get_events_mut(chart.get_course_mut(context.course)),
-                                );
                             }
                         }
                         _ => {}

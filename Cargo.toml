@@ -12,4 +12,4 @@ categories = ["games"]
 
 [dependencies]
 encoding_rs = "*"
-rodio = { version = "*", features = ["symphonia-aac", "symphonia-isomp4"] }
+rodio = { version = "*" }

@@ -14,6 +14,11 @@ pub enum EventType {
     Balloon,    // 7
     End,        // 8
     BALLOON,    // 9
+    DualDON,    // A
+    DualKA,     // B
+    Bomb,       // C
+    ADLIB,      // F
+    PURPLE,     // G
     MEASUREEND, // ,
     MEASURE(u8, u8),
     BPMCHANGE(f64),
@@ -44,6 +49,11 @@ impl std::fmt::Debug for EventType {
             Balloon => write!(f, "7"),
             End => write!(f, "8"),
             BALLOON => write!(f, "9"),
+            DualDON => write!(f, "A"),
+            DualKA => write!(f, "B"),
+            Bomb => write!(f, "C"),
+            ADLIB => write!(f, "F"),
+            PURPLE => write!(f, "G"),
             MEASUREEND => write!(f, ","),
             MEASURE(numerator, denominator) => write!(f, "#MEASURE {},{}", numerator, denominator),
             BPMCHANGE(bpm) => write!(f, "#BPMCHANGE {}", bpm),

@@ -43,11 +43,11 @@ fn main() {
         use application::resources::sounds::Sound;
         use tja::course::event::EventType::*;
         match &event.event_type {
-            Don | DON => {
+            Don | DON | DualDON | ADLIB | PURPLE => {
                 while t.elapsed().as_secs_f64() < event.offset {}
                 resources.sounds.play(&stream_handle, Sound::Don);
             }
-            Ka | KA => {
+            Ka | KA | DualKA => {
                 while t.elapsed().as_secs_f64() < event.offset {}
                 resources.sounds.play(&stream_handle, Sound::Ka);
             }

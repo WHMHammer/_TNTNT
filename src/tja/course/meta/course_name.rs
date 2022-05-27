@@ -15,10 +15,10 @@ impl CourseName {
             "Easy" | "easy" | "0" => Some(Self::Easy),
             "Normal" | "normal" | "1" => Some(Self::Normal),
             "Hard" | "hard" | "2" => Some(Self::Hard),
-            "Oni" | "oni" | "4" => Some(Self::Oni),
-            "Edit" | "edit" | "5" => Some(Self::Edit),
+            "Oni" | "oni" | "3" => Some(Self::Oni),
+            "Edit" | "edit" | "4" => Some(Self::Edit),
+            "Tower" | "tower" | "5" => Some(Self::Tower),
             "Dan" | "dan" | "6" => Some(Self::Dan),
-            "Tower" | "tower" | "7" => Some(Self::Tower),
             _ => None,
         }
     }
