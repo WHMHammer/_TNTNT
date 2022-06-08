@@ -61,8 +61,8 @@ impl Context {
                 Empty => {
                     self.offset += offset;
                 }
-                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON | DualDON
-                | DualKA | Bomb | ADLIB | PURPLE => {
+                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON | DualPlayerDON
+                | DualPlayerKa | Bomb | ADLIB | PURPLE => {
                     events.push(Event {
                         offset: self.offset,
                         event_type,
@@ -492,8 +492,8 @@ impl super::Chart {
                                             '7' => Balloon,
                                             '8' => End,
                                             '9' => BALLOON,
-                                            'A' => DualDON,
-                                            'B' => DualKA,
+                                            'A' => DualPlayerDON,
+                                            'B' => DualPlayerKa,
                                             'C' => Bomb,
                                             'F' => ADLIB,
                                             'G' => PURPLE,

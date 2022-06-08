@@ -75,7 +75,21 @@ Why `Rust`? `Rust` is/has:
         - `EXAM2`
         - `EXAM3`
     - Notes
-        - `0`-`9`
+        - `0` (empty)
+        - `1` (Don)
+        - `2` (Ka)
+        - `3` (DON)
+        - `4` (KA)
+        - `5` (Drumroll starts)
+        - `6` (DRUMROLL starts)
+        - `7` (Balloon starts)
+        - `8` (drumroll/balloon ends)
+        - `9` (BALLOON starts)
+        - `A` (Dual Player DON)
+        - `B` (Dual Player KA)
+        - `C` (Bomb)
+        - `F` (ADLIB)
+        - `G` (Purple)
     - Commands
         - `#START`
         - `#END`

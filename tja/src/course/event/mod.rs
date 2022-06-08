@@ -14,8 +14,8 @@ pub enum EventType {
     Balloon,    // 7
     End,        // 8
     BALLOON,    // 9
-    DualDON,    // A
-    DualKA,     // B
+    DualPlayerDON,    // A
+    DualPlayerKa,     // B
     Bomb,       // C
     ADLIB,      // F
     PURPLE,     // G
@@ -49,8 +49,8 @@ impl std::fmt::Debug for EventType {
             Balloon => write!(f, "7"),
             End => write!(f, "8"),
             BALLOON => write!(f, "9"),
-            DualDON => write!(f, "A"),
-            DualKA => write!(f, "B"),
+            DualPlayerDON => write!(f, "A"),
+            DualPlayerKa => write!(f, "B"),
             Bomb => write!(f, "C"),
             ADLIB => write!(f, "F"),
             PURPLE => write!(f, "G"),
