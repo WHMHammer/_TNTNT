@@ -1,6 +1,5 @@
 use super::course;
 use super::meta::scoremode::Scoremode;
-use crate::i18n;
 use course::{
     event::{branch::Branches, nextsong::Nextsong, Event, EventType},
     meta::{course_name::CourseName, exam::Exam, style::Style},
@@ -164,8 +163,6 @@ impl super::Chart {
     pub fn parse_from_path<P>(
         path: P,
         encoding: Option<&'static encoding_rs::Encoding>,
-        conf: &crate::application::conf::Conf,
-        genre: Option<&String>,
     ) -> Option<Self>
     where
         P: AsRef<std::path::Path>,
@@ -195,7 +192,6 @@ impl super::Chart {
             }
             let text = text.unwrap();
             let mut chart = Self::default();
-            chart.meta.genre = genre.map(String::clone); // some tja files don't record their genres, but rather determined by their folders
             let mut char_indices = text.char_indices();
             let mut i = 0;
             let mut previous_character = ' ';
@@ -233,30 +229,25 @@ impl super::Chart {
                     } else {
                         value = text[index_low..index_high].trim();
                     }
+                    use i18n::Locale::*;
                     match key {
                         "TITLE" => {
-                            let locale = conf.locales[0];
-                            if chart.meta.title.is_none(locale) {
-                                chart.meta.title.set(value, locale);
-                            }
+                            chart.meta.title.set(value, None);
                         }
                         "TITLEEN" => {
-                            chart.meta.title.set(value, i18n::en_US);
+                            chart.meta.title.set(value, Some(en_US));
                         }
                         "TITLECN" => {
-                            chart.meta.title.set(value, i18n::zh_CN);
+                            chart.meta.title.set(value, Some(zh_CN));
                         }
                         "SUBTITLE" => {
-                            chart.meta.subtitle.set(
-                                value,
-                                *conf.locales.first().unwrap_or(&i18n::Locale::default()),
-                            );
+                            chart.meta.subtitle.set(value, None);
                         }
                         "SUBTITLEEN" => {
-                            chart.meta.subtitle.set(value, i18n::en_US);
+                            chart.meta.subtitle.set(value, Some(en_US));
                         }
                         "SUBTITLECN" => {
-                            chart.meta.subtitle.set(value, i18n::zh_CN);
+                            chart.meta.subtitle.set(value, Some(zh_CN));
                         }
                         "BPM" => {
                             if let Ok(bpm) = value.parse() {

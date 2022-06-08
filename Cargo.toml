@@ -1,6 +1,6 @@
 [package]
 name = "tntnt"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["WHMHammer <whmhammer@gmail.com>"]
 edition = "2021"
 description = "Yet another .tja player"
@@ -11,5 +11,7 @@ keywords = ["taiko-no-tatsujin", "tja"]
 categories = ["games"]
 
 [dependencies]
-encoding_rs = "*"
+i18n = { package = "tntnt-i18n", path = "i18n" }
+tja = { package = "tntnt-tja", path = "tja" }
+
 rodio = { version = "*" }

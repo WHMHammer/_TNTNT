@@ -1,22 +1,17 @@
 mod application;
-mod i18n;
-mod tja;
 use application::audio::Audio;
 use std::time::{Duration, Instant};
 use tja::course::meta::course_name::CourseName;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
-    let conf = application::conf::Conf::default();
     let resources = application::resources::Resources::load_from_directory("System/SimpleStyle/"); // TJAPlayer3-style resources
     let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
     let sink = rodio::Sink::try_new(&stream_handle).unwrap();
 
     let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
     let directory = tja_path.parent().unwrap();
-    let chart =
-        tja::Chart::parse_from_path(tja_path, None, &conf, Some(&"box.def Genre".to_string()))
-            .unwrap();
+    let chart = tja::Chart::parse_from_path(tja_path, None).unwrap();
     let course = chart.oni_course.as_ref().unwrap();
     let events = &course.p0;
     println!("{:?}", course.meta);

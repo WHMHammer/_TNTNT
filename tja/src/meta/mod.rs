@@ -1,7 +1,6 @@
 pub mod scoremode;
+use i18n::{I18nString, Locale};
 use scoremode::Scoremode;
-
-use crate::i18n::I18nString;
 
 pub struct Meta {
     pub title: I18nString,
@@ -34,7 +33,22 @@ impl Default for Meta {
 impl std::fmt::Debug for Meta {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "TITLE:{}", self.title.get(&[]))?;
+        for &locale in Locale::variants() {
+            if self.title.exists(locale) {
+                writeln!(f, "TITLE{}:{}", locale.suffix(), self.title.get(&[locale]))?;
+            }
+        }
         writeln!(f, "SUBTITLE:{}", self.subtitle.get(&[]))?;
+        for &locale in Locale::variants() {
+            if self.title.exists(locale) {
+                writeln!(
+                    f,
+                    "SUBTITLE{}:{}",
+                    locale.suffix(),
+                    self.subtitle.get(&[locale])
+                )?;
+            }
+        }
         if let Some(wave) = &self.wave {
             writeln!(f, "WAVE:{}", wave)?;
         }

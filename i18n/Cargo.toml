@@ -1,0 +1,9 @@
+[package]
+name = "tntnt-i18n"
+version = "1.0.0"
+authors = ["WHMHammer <whmhammer@gmail.com>"]
+edition = "2021"
+repository = "https://github.com/WHMHammer/TNTNT/tree/main/i18n"
+license-file = "../LICENSE.md"
+keywords = ["i18n", "internationalization"]
+categories = ["i18n"]
