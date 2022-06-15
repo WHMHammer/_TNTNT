@@ -4,22 +4,22 @@ use branch::Branches;
 use nextsong::Nextsong;
 
 pub enum EventType {
-    Empty,      // 0
-    Don,        // 1
-    Ka,         // 2
-    DON,        // 3
-    KA,         // 4
-    Drumroll,   // 5
-    DRUMROLL,   // 6
-    Balloon,    // 7
-    End,        // 8
-    BALLOON,    // 9
-    DualPlayerDON,    // A
-    DualPlayerKa,     // B
-    Bomb,       // C
-    ADLIB,      // F
-    PURPLE,     // G
-    MEASUREEND, // ,
+    Empty,         // 0
+    Don,           // 1
+    Ka,            // 2
+    DON,           // 3
+    KA,            // 4
+    Drumroll,      // 5
+    DRUMROLL,      // 6
+    Balloon,       // 7
+    End,           // 8
+    BALLOON,       // 9
+    DualPlayerDON, // A
+    DualPlayerKa,  // B
+    Bomb,          // C
+    ADLIB,         // F
+    PURPLE,        // G
+    MEASUREEND,    // ,
     MEASURE(u8, u8),
     BPMCHANGE(f64),
     DELAY(f64),

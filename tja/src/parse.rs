@@ -61,8 +61,8 @@ impl Context {
                 Empty => {
                     self.offset += offset;
                 }
-                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON | DualPlayerDON
-                | DualPlayerKa | Bomb | ADLIB | PURPLE => {
+                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON
+                | DualPlayerDON | DualPlayerKa | Bomb | ADLIB | PURPLE => {
                     events.push(Event {
                         offset: self.offset,
                         event_type,
@@ -363,7 +363,6 @@ impl super::Chart {
                             );
                             {
                                 use std::io::Write;
-                                println!("{:?}", context.course);
                                 let mut path = Vec::new();
                                 write!(&mut path, "{:?}.out", context.course).unwrap();
                                 let mut file =

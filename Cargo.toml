@@ -14,4 +14,6 @@ categories = ["games"]
 i18n = { package = "tntnt-i18n", path = "i18n" }
 tja = { package = "tntnt-tja", path = "tja" }
 
-rodio = { version = "*" }
+hound = "*"
+lewton = "*"
+sdl2 = { version = "*", features = ["bundled"] }

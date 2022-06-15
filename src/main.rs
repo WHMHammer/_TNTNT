@@ -1,33 +1,37 @@
-mod application;
-use application::audio::Audio;
+mod audio;
 use std::time::{Duration, Instant};
-use tja::course::meta::course_name::CourseName;
+
+use audio::Device;
 
 fn main() {
     // all codes here are purely for testing purposes; there is no runnable application yet
-    let resources = application::resources::Resources::load_from_directory("System/SimpleStyle/"); // TJAPlayer3-style resources
-    let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
-    let sink = rodio::Sink::try_new(&stream_handle).unwrap();
-
     let tja_path = std::path::Path::new("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
     let directory = tja_path.parent().unwrap();
     let chart = tja::Chart::parse_from_path(tja_path, None).unwrap();
     let course = chart.oni_course.as_ref().unwrap();
     let events = &course.p0;
+    println!("{:?}", chart.meta);
     println!("{:?}", course.meta);
 
-    if let CourseName::Dan = course.meta.course {
-    } else {
-        sink.append(
-            Audio::load_from_path(directory.join(chart.meta.wave.as_ref().unwrap()))
-                .unwrap()
-                .decoder()
-                .unwrap(),
-        );
-    }
+    let sdl = sdl2::init().unwrap();
+    let audio_subsystem = sdl.audio().unwrap();
+
+    let mut music = Device::from_path(
+        directory.join(chart.meta.wave.as_ref().unwrap()),
+        &audio_subsystem,
+    )
+    .unwrap();
+    let mut don =
+        Device::from_path("System/SimpleStyle/Sounds/Taiko/dong.ogg", &audio_subsystem).unwrap();
+    let mut ka =
+        Device::from_path("System/SimpleStyle/Sounds/Taiko/ka.ogg", &audio_subsystem).unwrap();
+    let mut balloon =
+        Device::from_path("System/SimpleStyle/Sounds/balloon.ogg", &audio_subsystem).unwrap();
+
     let mut flag_balloon = false;
     let mut flag_rolled = false;
     let mut t;
+    music.play();
     if chart.meta.offset < 0.0 {
         t = Instant::now() + Duration::from_secs_f64(-chart.meta.offset);
         while t.elapsed().as_nanos() <= 0 {}
@@ -35,16 +39,15 @@ fn main() {
         t = Instant::now() - Duration::from_secs_f64(chart.meta.offset);
     }
     for event in events {
-        use application::resources::sounds::Sound;
         use tja::course::event::EventType::*;
         match &event.event_type {
             Don | DON | DualPlayerDON | ADLIB | PURPLE => {
                 while t.elapsed().as_secs_f64() < event.offset {}
-                resources.sounds.play(&stream_handle, Sound::Don);
+                don.play();
             }
             Ka | KA | DualPlayerKa => {
                 while t.elapsed().as_secs_f64() < event.offset {}
-                resources.sounds.play(&stream_handle, Sound::Ka);
+                ka.play()
             }
             Drumroll | DRUMROLL => while t.elapsed().as_secs_f64() < event.offset {},
             Balloon | BALLOON => {
@@ -55,14 +58,14 @@ fn main() {
                 let millis = t.elapsed().as_millis();
                 if millis as f64 / 1000.0 >= event.offset {
                     if flag_balloon {
-                        resources.sounds.play(&stream_handle, Sound::Balloon);
+                        balloon.play();
                         flag_balloon = false;
                     }
                     break;
                 }
                 if millis % 90 == 0 {
                     if !flag_rolled {
-                        resources.sounds.play(&stream_handle, Sound::Don);
+                        don.play();
                         flag_rolled = true;
                     }
                 } else {
@@ -92,11 +95,11 @@ fn main() {
                     match event.event_type {
                         Don | DON => {
                             while t.elapsed().as_secs_f64() < event.offset {}
-                            resources.sounds.play(&stream_handle, Sound::Don);
+                            don.play();
                         }
                         Ka | KA => {
                             while t.elapsed().as_secs_f64() < event.offset {}
-                            resources.sounds.play(&stream_handle, Sound::Ka);
+                            ka.play();
                         }
                         Drumroll | DRUMROLL => while t.elapsed().as_secs_f64() < event.offset {},
                         Balloon | BALLOON => {
@@ -107,14 +110,14 @@ fn main() {
                             let millis = t.elapsed().as_millis();
                             if millis as f64 / 1000.0 >= event.offset {
                                 if flag_balloon {
-                                    resources.sounds.play(&stream_handle, Sound::Balloon);
+                                    balloon.play();
                                     flag_balloon = false;
                                 }
                                 break;
                             }
                             if millis % 90 == 0 {
                                 if !flag_rolled {
-                                    resources.sounds.play(&stream_handle, Sound::Don);
+                                    don.play();
                                     flag_rolled = true;
                                 }
                             } else {
@@ -128,18 +131,14 @@ fn main() {
                 continue;
             }
             NEXTSONG(nextsong) => {
-                sink.sleep_until_end();
-                sink.append(
-                    Audio::load_from_path(directory.join(&nextsong.wave))
-                        .unwrap()
-                        .decoder()
-                        .unwrap(),
-                );
+                while t.elapsed() < music.duration() {}
+                music =
+                    Device::from_path(directory.join(&nextsong.wave), &audio_subsystem).unwrap();
                 t = Instant::now();
             }
             _ => {}
         }
         println!("{:?}", event);
     }
-    sink.sleep_until_end();
+    while t.elapsed() < music.duration() {}
 }
