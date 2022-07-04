@@ -14,7 +14,7 @@ where
 
     let tja_path = path.as_ref();
     let directory = tja_path.parent().unwrap();
-    let chart = tja::Chart::parse_from_path(tja_path, None).unwrap();
+    let chart = tja::Chart::load(tja_path, None).unwrap();
     let course = chart
         .oni_course
         .as_ref()

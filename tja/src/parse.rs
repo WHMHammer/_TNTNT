@@ -61,8 +61,8 @@ impl Context {
                 Empty => {
                     self.offset += offset;
                 }
-                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON | DualPlayerDON
-                | DualPlayerKa | Bomb | ADLIB | PURPLE => {
+                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON
+                | DualPlayerDON | DualPlayerKa | Bomb | ADLIB | PURPLE => {
                     events.push(Event {
                         offset: self.offset,
                         event_type,
@@ -160,10 +160,7 @@ impl Default for Context {
 }
 
 impl super::Chart {
-    pub fn parse_from_path<P>(
-        path: P,
-        encoding: Option<&'static encoding_rs::Encoding>,
-    ) -> Option<Self>
+    pub fn load<P>(path: P, encoding: Option<&'static encoding_rs::Encoding>) -> Option<Self>
     where
         P: AsRef<std::path::Path>,
     {
@@ -361,7 +358,7 @@ impl super::Chart {
                                 &mut measure,
                                 context.get_events_mut(chart.get_course_mut(context.course)),
                             );
-                            {
+                            /*{
                                 use std::io::Write;
                                 println!("{:?}", context.course);
                                 let mut path = Vec::new();
@@ -375,7 +372,7 @@ impl super::Chart {
                                     chart.get_course(context.course).unwrap()
                                 )
                                 .unwrap();
-                            }
+                            }*/
                             let course = context.course;
                             context = chart_context.clone(); // the STYLE info is lost, but it doesn't matter
                             context.course = course; // the COURSE info has to be kept for STYLE:Double
@@ -543,11 +540,11 @@ impl super::Chart {
                     }
                 }
                 if flag_eof {
-                    {
+                    /*{
                         use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();
                         write!(&mut file, "{:?}", chart).unwrap();
-                    }
+                    }*/
                     return Some(chart);
                 }
                 previous_character = character;
