@@ -12,6 +12,7 @@ categories = ["games"]
 
 [dependencies]
 i18n = { package = "tntnt-i18n", path = "i18n" }
+serde_json = "*"
 tja = { package = "tntnt-tja", path = "tja" }
 
 rodio = { version = "*" }
