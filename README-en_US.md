@@ -67,7 +67,7 @@ Why `Rust`? `Rust` is/has:
     - Meta (course-specific)
         - `COURSE`
         - `LEVEL`
-        - `BALLOON`
+        - `BigBalloon`
         - `SCOREINIT`
         - `SCOREDIFF`
         - `STYLE`
@@ -78,15 +78,15 @@ Why `Rust`? `Rust` is/has:
         - `0` (empty)
         - `1` (Don)
         - `2` (Ka)
-        - `3` (DON)
-        - `4` (KA)
+        - `3` (BigDon)
+        - `4` (BigKa)
         - `5` (Drumroll starts)
-        - `6` (DRUMROLL starts)
+        - `6` (BigDrumroll starts)
         - `7` (Balloon starts)
         - `8` (drumroll/balloon ends)
-        - `9` (BALLOON starts)
-        - `A` (Dual Player DON)
-        - `B` (Dual Player KA)
+        - `9` (BigBalloon starts)
+        - `A` (Dual Player BigDon)
+        - `B` (Dual Player BigKa)
         - `C` (Bomb)
         - `F` (ADLIB)
         - `G` (Purple)

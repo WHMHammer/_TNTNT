@@ -68,7 +68,7 @@
     - 元信息（各难度独立）
         - `COURSE`
         - `LEVEL`
-        - `BALLOON`
+        - `BigBalloon`
         - `SCOREINIT`
         - `SCOREDIFF`
         - `STYLE`

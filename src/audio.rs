@@ -1,4 +1,5 @@
 use rodio::Source;
+use std::time::Duration;
 
 pub struct Audio {
     channels: u16,
@@ -28,8 +29,8 @@ impl Audio {
         self.sample_rate
     }
 
-    pub fn duration(&self) -> std::time::Duration {
-        std::time::Duration::from_secs_f64(
+    pub fn duration(&self) -> Duration {
+        Duration::from_secs_f64(
             (self.samples.len() / self.channels as usize) as f64 / self.sample_rate as f64,
         )
     }
@@ -80,7 +81,7 @@ impl Source for AudioSource {
         self.audio.sample_rate()
     }
 
-    fn total_duration(&self) -> Option<std::time::Duration> {
+    fn total_duration(&self) -> Option<Duration> {
         Some(self.audio.duration())
     }
 }

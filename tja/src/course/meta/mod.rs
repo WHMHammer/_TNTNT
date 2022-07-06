@@ -40,14 +40,14 @@ impl std::fmt::Debug for Meta {
         writeln!(f, "COURSE:{:?}", self.course)?;
         writeln!(f, "LEVEL:{}", self.level)?;
         if !self.balloon.is_empty() {
-            write!(f, "BALLOON:{}", self.balloon[0])?;
+            write!(f, "BigBalloon:{}", self.balloon[0])?;
             for count in &self.balloon[1..] {
                 write!(f, ",{}", count)?;
             }
             writeln!(f)?;
         }
         if !self.balloon_double.is_empty() {
-            write!(f, "BALLOON (Double):{}", self.balloon_double[0])?;
+            write!(f, "BigBalloon (Double):{}", self.balloon_double[0])?;
             for count in &self.balloon_double[1..] {
                 write!(f, ",{}", count)?;
             }

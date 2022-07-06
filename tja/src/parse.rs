@@ -61,8 +61,8 @@ impl Context {
                 Empty => {
                     self.offset += offset;
                 }
-                Don | Ka | DON | KA | Drumroll | DRUMROLL | Balloon | End | BALLOON
-                | DualPlayerDON | DualPlayerKa | Bomb | ADLIB | PURPLE => {
+                Don | Ka | BigDon | BigKa | Drumroll | BigDrumroll | Balloon | End | BigBalloon
+                | DualPlayerDon | DualPlayerKa | Bomb | ADLIB | Purple => {
                     events.push(Event {
                         offset: self.offset,
                         event_type,
@@ -129,7 +129,7 @@ impl Context {
             Player::P2 => &mut course.p2,
         }
         .last_mut()
-        .unwrap()
+        .unwrap() // TODO: consider the None case
         .event_type
         {
             match self.branch {
@@ -160,7 +160,7 @@ impl Default for Context {
 }
 
 impl super::Chart {
-    pub fn load<P>(path: P, encoding: Option<&'static encoding_rs::Encoding>) -> Option<Self>
+    pub fn load<P>(path: P, encoding: Option<&'static encoding_rs::Encoding>) -> Result<Self, ()>
     where
         P: AsRef<std::path::Path>,
     {
@@ -185,9 +185,9 @@ impl super::Chart {
                 }
             }
             if text.is_none() {
-                return None;
+                return Err(());
             }
-            let text = text.unwrap();
+            let text = text.unwrap(); // never panics because the None case is checkout above
             let mut chart = Self::default();
             let mut char_indices = text.char_indices();
             let mut i = 0;
@@ -292,7 +292,7 @@ impl super::Chart {
                                 chart.get_course_mut(context.course).meta.level = level;
                             }
                         }
-                        "BALLOON" => {
+                        "BigBalloon" => {
                             for value in value.split(',') {
                                 if let Ok(value) = value.parse() {
                                     if context.style == Style::Single {
@@ -358,7 +358,7 @@ impl super::Chart {
                                 &mut measure,
                                 context.get_events_mut(chart.get_course_mut(context.course)),
                             );
-                            /*{
+                            {
                                 use std::io::Write;
                                 println!("{:?}", context.course);
                                 let mut path = Vec::new();
@@ -372,7 +372,7 @@ impl super::Chart {
                                     chart.get_course(context.course).unwrap()
                                 )
                                 .unwrap();
-                            }*/
+                            }
                             let course = context.course;
                             context = chart_context.clone(); // the STYLE info is lost, but it doesn't matter
                             context.course = course; // the COURSE info has to be kept for STYLE:Double
@@ -482,18 +482,18 @@ impl super::Chart {
                                         measure.push_back(match character {
                                             '1' => Don,
                                             '2' => Ka,
-                                            '3' => DON,
-                                            '4' => KA,
+                                            '3' => BigDon,
+                                            '4' => BigKa,
                                             '5' => Drumroll,
-                                            '6' => DRUMROLL,
+                                            '6' => BigDrumroll,
                                             '7' => Balloon,
                                             '8' => End,
-                                            '9' => BALLOON,
-                                            'A' => DualPlayerDON,
+                                            '9' => BigBalloon,
+                                            'A' => DualPlayerDon,
                                             'B' => DualPlayerKa,
                                             'C' => Bomb,
                                             'F' => ADLIB,
-                                            'G' => PURPLE,
+                                            'G' => Purple,
                                             _ => Empty,
                                         });
                                         context.measure_notes_count += 1;
@@ -540,16 +540,16 @@ impl super::Chart {
                     }
                 }
                 if flag_eof {
-                    /*{
+                    {
                         use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();
                         write!(&mut file, "{:?}", chart).unwrap();
-                    }*/
-                    return Some(chart);
+                    }
+                    return Ok(chart);
                 }
                 previous_character = character;
             }
         }
-        None
+        Err(())
     }
 }

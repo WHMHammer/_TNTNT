@@ -37,43 +37,43 @@ impl Chart {
                 if self.easy_course.is_none() {
                     self.easy_course = Some(Course::default());
                 }
-                self.easy_course.as_mut().unwrap()
+                self.easy_course.as_mut().unwrap() // never panics because it is just assigned above
             }
             Normal => {
                 if self.normal_course.is_none() {
                     self.normal_course = Some(Course::default());
                 }
-                self.normal_course.as_mut().unwrap()
+                self.normal_course.as_mut().unwrap() // never panics because it is just assigned above
             }
             Hard => {
                 if self.hard_course.is_none() {
                     self.hard_course = Some(Course::default());
                 }
-                self.hard_course.as_mut().unwrap()
+                self.hard_course.as_mut().unwrap() // never panics because it is just assigned above
             }
             Oni => {
                 if self.oni_course.is_none() {
                     self.oni_course = Some(Course::default());
                 }
-                self.oni_course.as_mut().unwrap()
+                self.oni_course.as_mut().unwrap() // never panics because it is just assigned above
             }
             Edit => {
                 if self.edit_course.is_none() {
                     self.edit_course = Some(Course::default());
                 }
-                self.edit_course.as_mut().unwrap()
+                self.edit_course.as_mut().unwrap() // never panics because it is just assigned above
             }
             Dan => {
                 if self.dan_course.is_none() {
                     self.dan_course = Some(Course::default());
                 }
-                self.dan_course.as_mut().unwrap()
+                self.dan_course.as_mut().unwrap() // never panics because it is just assigned above
             }
             Tower => {
                 if self.tower_course.is_none() {
                     self.tower_course = Some(Course::default());
                 }
-                self.tower_course.as_mut().unwrap()
+                self.tower_course.as_mut().unwrap() // never panics because it is just assigned above
             }
         }
     }

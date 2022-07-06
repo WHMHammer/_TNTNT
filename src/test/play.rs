@@ -5,7 +5,6 @@ pub fn play<P>(path: P)
 where
     P: AsRef<std::path::Path>,
 {
-    // all codes here are purely for testing purposes; there is no runnable application yet
     let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
     let don = crate::audio::Audio::load("resources/audios/taiko/don.wav").unwrap();
     let ka = crate::audio::Audio::load("resources/audios/taiko/ka.wav").unwrap();
@@ -15,10 +14,20 @@ where
     let tja_path = path.as_ref();
     let directory = tja_path.parent().unwrap();
     let chart = tja::Chart::load(tja_path, None).unwrap();
-    let course = chart
-        .oni_course
-        .as_ref()
-        .unwrap_or_else(|| chart.dan_course.as_ref().unwrap());
+    let course = chart.dan_course.as_ref().unwrap_or_else(|| {
+        chart.tower_course.as_ref().unwrap_or_else(|| {
+            chart.edit_course.as_ref().unwrap_or_else(|| {
+                chart.oni_course.as_ref().unwrap_or_else(|| {
+                    chart.hard_course.as_ref().unwrap_or_else(|| {
+                        chart
+                            .normal_course
+                            .as_ref()
+                            .unwrap_or_else(|| chart.easy_course.as_ref().unwrap())
+                    })
+                })
+            })
+        })
+    });
     let events = &course.p0;
     println!("{:?}", course.meta);
 
@@ -43,16 +52,16 @@ where
     for event in events {
         use tja::course::event::EventType::*;
         match &event.event_type {
-            Don | DON | DualPlayerDON | ADLIB | PURPLE => {
+            Don | BigDon | DualPlayerDon | ADLIB | Purple => {
                 while t.elapsed().as_secs_f64() < event.offset {}
                 don.play(&stream_handle).unwrap();
             }
-            Ka | KA | DualPlayerKa => {
+            Ka | BigKa | DualPlayerKa => {
                 while t.elapsed().as_secs_f64() < event.offset {}
                 ka.play(&stream_handle).unwrap();
             }
-            Drumroll | DRUMROLL => while t.elapsed().as_secs_f64() < event.offset {},
-            Balloon | BALLOON => {
+            Drumroll | BigDrumroll => while t.elapsed().as_secs_f64() < event.offset {},
+            Balloon | BigBalloon => {
                 while t.elapsed().as_secs_f64() < event.offset {}
                 flag_balloon = true;
             }
@@ -95,16 +104,16 @@ where
                     }
                 } {
                     match event.event_type {
-                        Don | DON => {
+                        Don | BigDon => {
                             while t.elapsed().as_secs_f64() < event.offset {}
                             don.play(&stream_handle).unwrap();
                         }
-                        Ka | KA => {
+                        Ka | BigKa => {
                             while t.elapsed().as_secs_f64() < event.offset {}
                             ka.play(&stream_handle).unwrap();
                         }
-                        Drumroll | DRUMROLL => while t.elapsed().as_secs_f64() < event.offset {},
-                        Balloon | BALLOON => {
+                        Drumroll | BigDrumroll => while t.elapsed().as_secs_f64() < event.offset {},
+                        Balloon | BigBalloon => {
                             while t.elapsed().as_secs_f64() < event.offset {}
                             flag_balloon = true;
                         }

@@ -5,7 +5,16 @@ Cargo.lock
 # editor
 .vscode
 
-# tests
-_*
+# resources
+*.ogg
+*.png
 *.tja
+*.wav
+!/resources/*
+
+# tests
+*.err
 *.out
+
+# unfinished work
+_*

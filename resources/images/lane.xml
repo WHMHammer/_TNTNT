@@ -1,0 +1,18 @@
+<LaneConfig width="1422" height="264" n_center_y="109" e_center_y="109" m_center_y="109">
+    <don center_x="53" center_y="53" />
+    <ka center_x="53" center_y="53" />
+    <big_don center_x="80" center_y="80" />
+    <big_ka center_x="80" center_y="80" />
+    <drumroll_head center_x="53" center_y="53" />
+    <drumroll_body center_y="53" />
+    <drumroll_tail center_y="53" />
+    <big_drumroll_head center_x="80" center_y="80" />
+    <big_drumroll_body center_y="80" />
+    <big_drumroll_tail center_y="80" />
+    <balloon_head center_x="53" center_y="53" />
+    <balloon_tail center_y="53" />
+    <big_balloon_head center_x="53" center_y="53" />
+    <big_balloon_tail center_y="53" />
+    <mine center_x="53" center_y="53" />
+    <purple center_x="80" center_y="80" />
+</LaneConfig>

@@ -13,7 +13,7 @@ pub fn get_all_tja_paths(root: &str) -> Vec<std::path::PathBuf> {
                         } else if file_type.is_file() {
                             if let Some(extension) = path.extension() {
                                 if extension == "tja" {
-                                    if let Some(_) = tja::Chart::load(&path, None) {
+                                    if let Ok(_) = tja::Chart::load(&path, None) {
                                         paths.push(path);
                                     }
                                 }

@@ -15,5 +15,7 @@ i18n = { package = "tntnt-i18n", path = "i18n" }
 tja = { package = "tntnt-tja", path = "tja" }
 
 image = "*"
+quick-xml = { version = "*", features = ["serialize"] }
 rodio = "*"
+serde = { version = "*", features = ["derive"] }
 serde_json = "*"
