@@ -1,5 +1,5 @@
 use std::time::{Duration, Instant};
-use tja::course::meta::course_name::CourseName;
+use tja::course::meta::difficulty::Difficulty;
 
 pub fn play<P>(path: P)
 where
@@ -28,10 +28,19 @@ where
             })
         })
     });
-    let events = &course.p0;
+    let events = if !course.p2.is_empty() {
+        if course.p1.is_empty() {
+            panic!(); // only one player's chart is presented while STYLE:DOUBLE
+        }
+        &course.p2
+    } else if !course.p1.is_empty() {
+        panic!(); // only one player's chart is presented while STYLE:DOUBLE
+    } else {
+        &course.p0
+    };
     println!("{:?}", course.meta);
 
-    if let CourseName::Dan = course.meta.course {
+    if let Difficulty::Dan = course.meta.course {
     } else {
         sink.append(
             rodio::decoder::Decoder::new(
@@ -50,7 +59,7 @@ where
         t = Instant::now() - Duration::from_secs_f64(chart.meta.offset);
     }
     for event in events {
-        use tja::course::event::EventType::*;
+        use tja::event::EventType::*;
         match &event.event_type {
             Don | BigDon | DualPlayerDon | ADLIB | Purple => {
                 while t.elapsed().as_secs_f64() < event.offset {}
@@ -83,8 +92,8 @@ where
                     flag_rolled = false;
                 }
             },
-            BRANCH(branches) => {
-                use tja::course::event::branch::Thresholds::*;
+            Branch(branches) => {
+                use tja::event::branch::Thresholds::*;
                 for event in match branches.thresholds {
                     r(_, _) => {
                         println!("#M");
@@ -141,11 +150,11 @@ where
                 }
                 continue;
             }
-            NEXTSONG(nextsong) => {
+            NextSong(next_song) => {
                 sink.sleep_until_end();
                 sink.append(
                     rodio::decoder::Decoder::new(
-                        std::fs::File::open(directory.join(&nextsong.wave)).unwrap(),
+                        std::fs::File::open(directory.join(&next_song.wave)).unwrap(),
                     )
                     .unwrap(),
                 );

@@ -1,10 +1,9 @@
-pub mod event;
 pub mod meta;
-use event::Event;
-use meta::Meta;
+use crate::event::Event;
+use meta::CourseMeta;
 
 pub struct Course {
-    pub meta: Meta,
+    pub meta: CourseMeta,
     pub p0: Vec<Event>,
     pub p1: Vec<Event>,
     pub p2: Vec<Event>,
@@ -13,7 +12,7 @@ pub struct Course {
 impl Default for Course {
     fn default() -> Self {
         Self {
-            meta: Meta::default(),
+            meta: CourseMeta::default(),
             p0: Vec::new(),
             p1: Vec::with_capacity(0),
             p2: Vec::with_capacity(0),

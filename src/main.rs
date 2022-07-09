@@ -6,6 +6,7 @@ use image::{
     RgbaImage,
 };
 use serde::{Deserialize, Serialize};
+use test::play;
 
 enum Branch {
     N,
@@ -101,6 +102,9 @@ fn main() {
         .generate_measure(Branch::M)
         .save("m-measure.png")
         .unwrap();
-    crate::test::play("Chun Jie Xu Qu/Chun Jie Xu Qu.tja");
-    //crate::test::play("D:\\Gaming\\Taiko\\Official Songs 20220423\\11 Dan Dojo\\01 Nijiiro 2021 Version\\01 Nijiiro 2021 Fifth Kyuu\\Nijiiro 2021 Fifth Kyuu.tja");
+    play("Chun Jie Xu Qu/Chun Jie Xu Qu.tja"); // example tja chart I wrote
+    //play("D:\\Gaming\\Taiko\\Official Songs 20220423\\11 Dan Dojo\\01 Nijiiro 2021 Version\\01 Nijiiro 2021 Fifth Kyuu\\Nijiiro 2021 Fifth Kyuu.tja"); // Dan
+    //play("D:\\Gaming\\Taiko\\Official Songs 20220423\\10 Taiko Towers\\Taiko Tower 10 Kara-kuchi\\Taiko Tower 10 Kara-kuchi.tja"); // Tower
+    //play("D:\\Gaming\\Taiko\\Official Songs 20220423\\07 Game Music\\Anzu no Uta\\Anzu no Uta.tja"); // branching (with branches impossible to reach)
+    //play("D:\\Gaming\\Taiko\\Official Songs 20220423\\01 Pop\\Natsu Matsuri\\Natsu Matsuri -New Audio-.tja"); // DOUBLE
 }

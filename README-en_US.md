@@ -67,7 +67,7 @@ Why `Rust`? `Rust` is/has:
     - Meta (course-specific)
         - `COURSE`
         - `LEVEL`
-        - `BigBalloon`
+        - `BALLOON`
         - `SCOREINIT`
         - `SCOREDIFF`
         - `STYLE`

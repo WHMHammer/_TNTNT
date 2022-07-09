@@ -1,7 +1,7 @@
 pub mod branch;
-pub mod nextsong;
+pub mod next_song;
 use branch::Branches;
-use nextsong::Nextsong;
+use next_song::NextSong;
 
 pub enum EventType {
     Empty,         // 0
@@ -19,20 +19,20 @@ pub enum EventType {
     Bomb,          // C
     ADLIB,         // F
     Purple,        // G
-    MEASUREEND,    // ,
-    MEASURE(u8, u8),
-    BPMCHANGE(f64),
-    DELAY(f64),
-    SCROLL(f64),
-    GOGOSTART,
-    GOGOEND,
-    BARLINEOFF,
-    BARLINEON,
-    BRANCH(Branches),
-    SECTION,
-    LYRIC(String),
-    LEVELHOLD,
-    NEXTSONG(Nextsong),
+    Barline,
+    Measure(u8, u8),
+    BpmChange(f64),
+    Delay(f64),
+    Scroll(f64),
+    GogoStart,
+    GogoEnd,
+    BarlineOff,
+    BarlineOn,
+    Branch(Branches),
+    Section,
+    Lyric(String),
+    LevelHold,
+    NextSong(NextSong),
 }
 
 impl std::fmt::Debug for EventType {
@@ -54,20 +54,20 @@ impl std::fmt::Debug for EventType {
             Bomb => write!(f, "C"),
             ADLIB => write!(f, "F"),
             Purple => write!(f, "G"),
-            MEASUREEND => write!(f, ","),
-            MEASURE(numerator, denominator) => write!(f, "#MEASURE {},{}", numerator, denominator),
-            BPMCHANGE(bpm) => write!(f, "#BPMCHANGE {}", bpm),
-            DELAY(delay) => write!(f, "#DELAY {}", delay),
-            SCROLL(scroll) => write!(f, "#SCROLL {}", scroll),
-            GOGOSTART => write!(f, "#GOGOSTART"),
-            GOGOEND => write!(f, "#GOGOEND"),
-            BARLINEOFF => write!(f, "#BARLINEOFF"),
-            BARLINEON => write!(f, "#BARLINEON"),
-            BRANCH(branches) => write!(f, "{:?}", branches),
-            SECTION => write!(f, "#SECTION"),
-            LYRIC(lyric) => write!(f, "#LYRIC {}", lyric),
-            LEVELHOLD => write!(f, "#LEVELHOLD"),
-            NEXTSONG(nextsong) => write!(f, "{:?}", nextsong),
+            Barline => write!(f, ","),
+            Measure(numerator, denominator) => write!(f, "#MEASURE {},{}", numerator, denominator),
+            BpmChange(bpm) => write!(f, "#BPMCHANGE {}", bpm),
+            Delay(delay) => write!(f, "#DELAY {}", delay),
+            Scroll(scroll) => write!(f, "#SCROLL {}", scroll),
+            GogoStart => write!(f, "#GOGOSTART"),
+            GogoEnd => write!(f, "#GOGOEND"),
+            BarlineOff => write!(f, "#BARLINEOFF"),
+            BarlineOn => write!(f, "#BARLINEON"),
+            Branch(branches) => write!(f, "{:?}", branches),
+            Section => write!(f, "#SECTION"),
+            Lyric(lyric) => write!(f, "#LYRIC {}", lyric),
+            LevelHold => write!(f, "#LEVELHOLD"),
+            NextSong(next_song) => write!(f, "{:?}", next_song),
         }
     }
 }
@@ -81,8 +81,8 @@ impl std::fmt::Debug for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use EventType::*;
         match self.event_type {
-            BRANCH(_) => write!(f, "{:?}", self.event_type),
-            NEXTSONG(_) => write!(f, "\n{:?}", self.event_type),
+            Branch(_) => write!(f, "{:?}", self.event_type),
+            NextSong(_) => write!(f, "\n{:?}", self.event_type),
             _ => write!(f, "{:?}\t@ {:.3}s", self.event_type, self.offset),
         }
     }

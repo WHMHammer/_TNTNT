@@ -1,5 +1,5 @@
 #[derive(Clone, Copy, Debug)]
-pub enum CourseName {
+pub enum Difficulty {
     Easy,
     Normal,
     Hard,
@@ -9,7 +9,7 @@ pub enum CourseName {
     Tower,
 }
 
-impl CourseName {
+impl Difficulty {
     pub fn from_str(slice: &str) -> Option<Self> {
         match slice {
             "Easy" | "easy" | "0" => Some(Self::Easy),
@@ -24,7 +24,7 @@ impl CourseName {
     }
 }
 
-impl Default for CourseName {
+impl Default for Difficulty {
     fn default() -> Self {
         Self::Oni
     }

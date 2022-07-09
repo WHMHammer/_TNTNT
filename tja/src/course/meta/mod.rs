@@ -1,33 +1,33 @@
-pub mod course_name;
+pub mod difficulty;
 pub mod exam;
 pub mod style;
-use {course_name::CourseName, exam::Exam};
+use {difficulty::Difficulty, exam::Exam};
 
-pub struct Meta {
-    pub course: CourseName,
+pub struct CourseMeta {
+    pub course: Difficulty,
     pub level: u8,
     pub balloon: Vec<u8>,
     pub balloon_double: Vec<u8>,
-    pub scoreinit: u32,
-    pub scoreinit_double: u32,
-    pub scorediff: u32,
-    pub scorediff_double: u32,
+    pub score_init: u32,
+    pub score_init_double: u32,
+    pub score_diff: u32,
+    pub score_diff_double: u32,
     pub exam1: Option<Exam>,
     pub exam2: Option<Exam>,
     pub exam3: Option<Exam>,
 }
 
-impl Default for Meta {
+impl Default for CourseMeta {
     fn default() -> Self {
         Self {
-            course: CourseName::default(),
+            course: Difficulty::default(),
             level: 0,
             balloon: Vec::new(),
             balloon_double: Vec::with_capacity(0),
-            scoreinit: 0,          // TODO: figure out the true default value
-            scoreinit_double: 0,   // TODO: figure out the true default value
-            scorediff: 100,        // TODO: figure out the true default value
-            scorediff_double: 100, // TODO: figure out the true default value
+            score_init: 0,          // TODO: figure out the true default value
+            score_init_double: 0,   // TODO: figure out the true default value
+            score_diff: 100,        // TODO: figure out the true default value
+            score_diff_double: 100, // TODO: figure out the true default value
             exam1: None,
             exam2: None,
             exam3: None,
@@ -35,7 +35,7 @@ impl Default for Meta {
     }
 }
 
-impl std::fmt::Debug for Meta {
+impl std::fmt::Debug for CourseMeta {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "COURSE:{:?}", self.course)?;
         writeln!(f, "LEVEL:{}", self.level)?;
@@ -53,10 +53,10 @@ impl std::fmt::Debug for Meta {
             }
             writeln!(f)?;
         }
-        writeln!(f, "SCOREDIFF:{}", self.scorediff)?;
-        writeln!(f, "SCOREDIFF (Double):{}", self.scorediff_double)?;
-        writeln!(f, "SCOREINIT:{}", self.scoreinit)?;
-        write!(f, "SCOREINIT (Double):{}", self.scoreinit_double)?;
+        writeln!(f, "SCOREDIFF:{}", self.score_diff)?;
+        writeln!(f, "SCOREDIFF (Double):{}", self.score_diff_double)?;
+        writeln!(f, "SCOREINIT:{}", self.score_init)?;
+        write!(f, "SCOREINIT (Double):{}", self.score_init_double)?;
         if let Some(exam) = &self.exam1 {
             write!(f, "\nEXAM1:{:?}", exam)?;
         }

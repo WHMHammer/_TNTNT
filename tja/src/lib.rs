@@ -1,7 +1,8 @@
 pub mod course;
+pub mod event;
 pub mod meta;
 mod parse;
-use course::{meta::course_name::CourseName, Course};
+use course::{meta::difficulty::Difficulty, Course};
 use meta::Meta;
 
 #[derive(Default)]
@@ -17,8 +18,8 @@ pub struct Chart {
 }
 
 impl Chart {
-    pub fn get_course(&self, c: CourseName) -> Option<&Course> {
-        use CourseName::*;
+    pub fn get_course(&self, c: Difficulty) -> Option<&Course> {
+        use Difficulty::*;
         match c {
             Easy => self.easy_course.as_ref(),
             Normal => self.normal_course.as_ref(),
@@ -30,8 +31,8 @@ impl Chart {
         }
     }
 
-    pub fn get_course_mut(&mut self, c: CourseName) -> &mut Course {
-        use CourseName::*;
+    pub fn get_course_mut(&mut self, c: Difficulty) -> &mut Course {
+        use Difficulty::*;
         match c {
             Easy => {
                 if self.easy_course.is_none() {
@@ -82,25 +83,25 @@ impl Chart {
 impl std::fmt::Debug for Chart {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.meta)?;
-        if let Some(course) = &self.easy_course {
+        if let Some(course) = &self.dan_course {
             write!(f, "\n\n{:?}", course)?;
         }
-        if let Some(course) = &self.normal_course {
-            write!(f, "\n\n{:?}", course)?;
-        }
-        if let Some(course) = &self.hard_course {
-            write!(f, "\n\n{:?}", course)?;
-        }
-        if let Some(course) = &self.oni_course {
+        if let Some(course) = &self.tower_course {
             write!(f, "\n\n{:?}", course)?;
         }
         if let Some(course) = &self.edit_course {
             write!(f, "\n\n{:?}", course)?;
         }
-        if let Some(course) = &self.dan_course {
+        if let Some(course) = &self.oni_course {
             write!(f, "\n\n{:?}", course)?;
         }
-        if let Some(course) = &self.tower_course {
+        if let Some(course) = &self.hard_course {
+            write!(f, "\n\n{:?}", course)?;
+        }
+        if let Some(course) = &self.normal_course {
+            write!(f, "\n\n{:?}", course)?;
+        }
+        if let Some(course) = &self.easy_course {
             write!(f, "\n\n{:?}", course)?;
         }
         Ok(())

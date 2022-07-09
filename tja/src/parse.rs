@@ -1,10 +1,9 @@
-use super::course;
-use super::meta::scoremode::Scoremode;
-use course::{
-    event::{branch::Branches, nextsong::Nextsong, Event, EventType},
-    meta::{course_name::CourseName, exam::Exam, style::Style},
+use crate::course::{
+    meta::{difficulty::Difficulty, exam::Exam, style::Style},
     Course,
 };
+use crate::event::{branch::Branches, next_song::NextSong, Event, EventType};
+use crate::meta::scoremode::Scoremode;
 
 #[derive(PartialEq)]
 enum State {
@@ -23,7 +22,7 @@ enum Branch {
     M,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum Player {
     P0,
     P1,
@@ -36,7 +35,7 @@ struct Context {
     bpm: f64,
     measure_notes_count: u8,
     offset: f64,
-    course: CourseName,
+    course: Difficulty,
     branch: Branch,
     style: Style,
     player: Player,
@@ -69,18 +68,18 @@ impl Context {
                     });
                     self.offset += offset;
                 }
-                MEASURE(numerator, denominator) => {
+                Measure(numerator, denominator) => {
                     self.time_signature = (numerator as f64, denominator as f64);
                     offset = self.seconds_per_note();
                 }
-                BPMCHANGE(bpm) => {
+                BpmChange(bpm) => {
                     self.bpm = bpm;
                     offset = self.seconds_per_note();
                 }
-                DELAY(delay) => {
+                Delay(delay) => {
                     self.offset += delay;
                 }
-                NEXTSONG(_) => {
+                NextSong(_) => {
                     self.offset = 0.0;
                     events.push(Event {
                         offset: 0.0,
@@ -103,13 +102,13 @@ impl Context {
             }
             events.push(Event {
                 offset: self.offset,
-                event_type: MEASUREEND,
+                event_type: Barline,
             });
         } else if self.measure_notes_count != 0 {
             // an implicit measure without an ending comma
             events.push(Event {
                 offset: self.offset,
-                event_type: MEASUREEND,
+                event_type: Barline,
             });
         }
         // otherwise not a measure, but just some commands; no need to increase the offset
@@ -123,7 +122,7 @@ impl Context {
                 Player::P1 => &mut course.p1,
                 Player::P2 => &mut course.p2,
             }
-        } else if let EventType::BRANCH(branches) = &mut match self.player {
+        } else if let EventType::Branch(branches) = &mut match self.player {
             Player::P0 => &mut course.p0,
             Player::P1 => &mut course.p1,
             Player::P2 => &mut course.p2,
@@ -151,7 +150,7 @@ impl Default for Context {
             bpm: 120.0,
             measure_notes_count: 0,
             offset: 0.0,
-            course: CourseName::default(),
+            course: Difficulty::default(),
             branch: Branch::None,
             style: Style::default(),
             player: Player::P0,
@@ -159,7 +158,7 @@ impl Default for Context {
     }
 }
 
-impl super::Chart {
+impl crate::Chart {
     pub fn load<P>(path: P, encoding: Option<&'static encoding_rs::Encoding>) -> Result<Self, ()>
     where
         P: AsRef<std::path::Path>,
@@ -199,7 +198,7 @@ impl super::Chart {
             let mut state = State::Notes; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
             let mut context = Context::default();
             let mut chart_context = Context::default(); // the initial context of the chart; cloned back to `context` at the #END
-            let mut branchstart_context = Context::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
+            let mut branch_start_context = Context::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
             let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to `chart` at the end of the measures ("," in tja)
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
@@ -282,7 +281,7 @@ impl super::Chart {
                             chart.meta.bgmovie = Some(value.to_string());
                         }
                         "COURSE" => {
-                            if let Some(c) = CourseName::from_str(value) {
+                            if let Some(c) = Difficulty::from_str(value) {
                                 chart.get_course_mut(c).meta.course = c;
                                 context.course = c;
                             }
@@ -312,22 +311,24 @@ impl super::Chart {
                             }
                         }
                         "SCOREINIT" => {
-                            if let Ok(scoreinit) = value.parse() {
+                            if let Ok(score_init) = value.parse() {
                                 if context.style == Style::Single {
-                                    chart.get_course_mut(context.course).meta.scoreinit = scoreinit;
+                                    chart.get_course_mut(context.course).meta.score_init =
+                                        score_init;
                                 } else {
-                                    chart.get_course_mut(context.course).meta.scoreinit_double =
-                                        scoreinit;
+                                    chart.get_course_mut(context.course).meta.score_init_double =
+                                        score_init;
                                 }
                             }
                         }
                         "SCOREDIFF" => {
-                            if let Ok(scorediff) = value.parse() {
+                            if let Ok(score_diff) = value.parse() {
                                 if context.style == Style::Single {
-                                    chart.get_course_mut(context.course).meta.scorediff = scorediff;
+                                    chart.get_course_mut(context.course).meta.score_diff =
+                                        score_diff;
                                 } else {
-                                    chart.get_course_mut(context.course).meta.scorediff_double =
-                                        scorediff;
+                                    chart.get_course_mut(context.course).meta.score_diff_double =
+                                        score_diff;
                                 }
                             }
                         }
@@ -360,7 +361,7 @@ impl super::Chart {
                             );
                             {
                                 use std::io::Write;
-                                println!("{:?}", context.course);
+                                println!("{:?} {:?}", context.course, context.player);
                                 let mut path = Vec::new();
                                 write!(&mut path, "{:?}.out", context.course).unwrap();
                                 let mut file =
@@ -383,7 +384,7 @@ impl super::Chart {
                                 if let Ok(numerator) = numerator.parse() {
                                     if let Some(denominator) = values.next() {
                                         if let Ok(denominator) = denominator.parse() {
-                                            measure.push_back(EventType::MEASURE(
+                                            measure.push_back(EventType::Measure(
                                                 numerator,
                                                 denominator,
                                             ));
@@ -394,23 +395,23 @@ impl super::Chart {
                         }
                         "#BPMCHANGE" => {
                             if let Ok(bpm) = value.parse() {
-                                measure.push_back(EventType::BPMCHANGE(bpm));
+                                measure.push_back(EventType::BpmChange(bpm));
                             }
                         }
                         "#DELAY" => {
                             if let Ok(delay) = value.parse() {
-                                measure.push_back(EventType::DELAY(delay))
+                                measure.push_back(EventType::Delay(delay))
                             }
                         }
                         "#SCROLL" => {
                             if let Ok(scroll) = value.parse() {
-                                measure.push_back(EventType::SCROLL(scroll))
+                                measure.push_back(EventType::Scroll(scroll))
                             }
                         }
-                        "#GOGOSTART" => measure.push_back(EventType::GOGOSTART),
-                        "#GOGOEND" => measure.push_back(EventType::GOGOEND),
-                        "#BARLINEOFF" => measure.push_back(EventType::BARLINEOFF),
-                        "#BARLINEON" => measure.push_back(EventType::BARLINEON),
+                        "#GOGOSTART" => measure.push_back(EventType::GogoStart),
+                        "#GOGOEND" => measure.push_back(EventType::GogoEnd),
+                        "#BARLINEOFF" => measure.push_back(EventType::BarlineOff),
+                        "#BARLINEON" => measure.push_back(EventType::BarlineOn),
                         "#BRANCHSTART" => {
                             if let Some(branches) = Branches::from_str(value) {
                                 let course = chart.get_course_mut(context.course);
@@ -425,10 +426,10 @@ impl super::Chart {
                                 }
                                 .push(Event {
                                     offset: context.offset,
-                                    event_type: EventType::BRANCH(branches),
+                                    event_type: EventType::Branch(branches),
                                 });
                                 context.branch = Branch::N;
-                                branchstart_context = context.clone();
+                                branch_start_context = context.clone();
                             }
                         }
                         "#N" | "#E" | "#M" => {
@@ -437,7 +438,7 @@ impl super::Chart {
                                     &mut measure,
                                     context.get_events_mut(chart.get_course_mut(context.course)),
                                 );
-                                context = branchstart_context.clone();
+                                context = branch_start_context.clone();
                                 context.branch = match key {
                                     "#N" => Branch::N,
                                     "#E" => Branch::E,
@@ -455,16 +456,16 @@ impl super::Chart {
                                 context.branch = Branch::None;
                             }
                         }
-                        "#SECTION" => measure.push_back(EventType::SECTION), // TODO: investigate into its relation with #BRANCHSTART
+                        "#SECTION" => measure.push_back(EventType::Section),
                         "#LYRIC" => {
                             if !value.is_empty() {
-                                measure.push_back(EventType::LYRIC(value.to_string()));
+                                measure.push_back(EventType::Lyric(value.to_string()));
                             }
                         }
-                        "#LEVELHOLD" => measure.push_back(EventType::LEVELHOLD),
+                        "#LEVELHOLD" => measure.push_back(EventType::LevelHold),
                         "#NEXTSONG" => {
-                            if let Some(nextsong) = Nextsong::from_str(value) {
-                                measure.push_back(EventType::NEXTSONG(nextsong));
+                            if let Some(next_song) = NextSong::from_str(value) {
+                                measure.push_back(EventType::NextSong(next_song));
                             }
                         }
                         _ => {
