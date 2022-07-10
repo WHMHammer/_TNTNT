@@ -1,0 +1,136 @@
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+TITLE:óˆÇÃÇ§ÇΩ (feat. óRçËéi)
+SUBTITLE:--charted by WHMHammer
+BPM:80
+WAVE:óˆÇÃÇ§ÇΩ (feat. óRçËéi).flac
+OFFSET:-0.6
+GENRE:Anime
+MAKER:WHMHammer
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+COURSE:Oni
+LEVEL:8
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+#START
+1000000020000000,
+2000000010200000,
+1000000020000000,
+100020001000
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+0020,
+1001222110001212,
+2011211020000020,
+1002121110001212,
+2011211010000020,
+1001222110001212,
+2011211020000020,
+1002121110001212,
+2011211010000000,
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+2020210202211210,
+2020210200201001,
+2020210202211210,
+202221020120
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+#GOGOSTART
+1212,
+2002121110011212,
+2001211020201212,
+2002101110011212,
+201121101000
+#GOGOEND
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+0020,
+1001121110001212,
+2011211020000020,
+1002121110001212,
+2011211010000020,
+1001121110001212,
+2011201020000020,
+1002121110001212,
+201121101000
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+0001,
+2022210202211210,
+2222210201201001,
+2022210202211210,
+2022210201200000,
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+#SCROLL 2
+#GOGOSTART
+10002010102020101020202010000021,
+10202020100020102000000211000000,
+10002010102020101020202010000021,
+10202020100020102000000000000000,
+#GOGOEND
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+20022002201000200020201020201000,
+20002000201000200020200010000000,
+20022020201000200020001020201000,
+20002002201000200020200010000000,
+#GOGOSTART
+20202102022220102020210200201000,
+20202102022220102020210200201000,
+22202102022220102020210202201001,
+22222102022220112022210202201000,
+20202102022220102020210202201000,
+20202102022222102022210202201000,
+20222102020221102222210202221001,
+20022102022222102022110202201000,
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+10102010102010102010102020102020,
+22102010102010102021101020201010,
+20012001122010202010201020102102,
+20201002101010212022101220212020,
+20221021122210212020212010202111,
+20212021202121202121221020111010,
+00001020101020101020201020202010,
+20201020201020201022102110000000,
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+20202102022220102020210200201000,
+20202102022220102020210200201000,
+22202102022220102020210202201001,
+22222102022220112022210202201000,
+20202102022220102222210202201000,
+20202102022222102022211202201000,
+20222102020221102222210202221000,
+20222102022222102022210202201000,
+#GOGOEND
+#END
+
+// Author: [WHMHammer](https://github.com/whmhammer)
+// Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)

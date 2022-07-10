@@ -2,7 +2,9 @@ use crate::course::{
     meta::{difficulty::Difficulty, exam::Exam, style::Style},
     Course,
 };
-use crate::event::{branch::Branches, next_song::NextSong, Event, EventType};
+use crate::event::{
+    branch::Branches, context::Context, event_type::EventType, next_song::NextSong, Event,
+};
 use crate::meta::scoremode::Scoremode;
 
 #[derive(PartialEq)]
@@ -30,22 +32,43 @@ enum Player {
 }
 
 #[derive(Clone)]
-struct Context {
+struct ParserContext {
+    measure_notes_count: u8,
+    time_offset: f64,
+    position_offset: f64,
     time_signature: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
     bpm: f64,
-    measure_notes_count: u8,
-    offset: f64,
+    event_context: Context,
+    flag_bar_line: bool,
     course: Difficulty,
     branch: Branch,
     style: Style,
     player: Player,
 }
 
-impl Context {
+impl ParserContext {
     fn seconds_per_note(&self) -> f64 {
         240.0 / self.bpm * self.time_signature.0
             / self.time_signature.1
             / self.measure_notes_count as f64
+    }
+
+    fn unit_lengths_per_note(&self) -> f64 {
+        // one unit length is the length of a measure under #MEASURE 4/4 and #SCROLL 1
+        self.time_signature.0 / self.time_signature.1 / self.measure_notes_count as f64
+            * self.event_context.scroll
+    }
+
+    fn end_measure(&mut self, events: &mut Vec<Event>) {
+        self.event_context.measure_index += 1;
+        if self.flag_bar_line {
+            events.push(Event {
+                context: self.event_context.clone(),
+                event_type: EventType::BarLine,
+                time_offset: self.time_offset,
+                position_offset: self.position_offset,
+            });
+        }
     }
 
     fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
@@ -54,42 +77,86 @@ impl Context {
         events: &mut Vec<Event>,
     ) {
         use EventType::*;
-        let mut offset = self.seconds_per_note();
+        let mut seconds_per_note = self.seconds_per_note();
+        let mut unit_lengths_per_note = self.unit_lengths_per_note();
         while let Some(event_type) = measure.pop_front() {
             match event_type {
                 Empty => {
-                    self.offset += offset;
+                    self.time_offset += seconds_per_note;
+                    self.position_offset += unit_lengths_per_note;
                 }
                 Don | Ka | BigDon | BigKa | Drumroll | BigDrumroll | Balloon | End | BigBalloon
                 | DualPlayerDon | DualPlayerKa | Bomb | ADLIB | Purple => {
                     events.push(Event {
-                        offset: self.offset,
+                        context: self.event_context.clone(),
                         event_type,
+                        time_offset: self.time_offset,
+                        position_offset: self.position_offset,
                     });
-                    self.offset += offset;
+                    self.time_offset += seconds_per_note;
+                    self.position_offset += unit_lengths_per_note;
                 }
                 Measure(numerator, denominator) => {
                     self.time_signature = (numerator as f64, denominator as f64);
-                    offset = self.seconds_per_note();
+                    seconds_per_note = self.seconds_per_note();
+                    unit_lengths_per_note = self.unit_lengths_per_note();
                 }
                 BpmChange(bpm) => {
                     self.bpm = bpm;
-                    offset = self.seconds_per_note();
+                    seconds_per_note = self.seconds_per_note();
                 }
                 Delay(delay) => {
-                    self.offset += delay;
+                    self.time_offset += delay;
+                    self.position_offset += delay / seconds_per_note * unit_lengths_per_note;
+                }
+                Scroll(scroll) => {
+                    self.event_context.scroll = scroll;
+                    unit_lengths_per_note = self.unit_lengths_per_note();
+                }
+                GogoStart => {
+                    self.event_context.flag_gogo = true;
+                }
+                GogoEnd => {
+                    self.event_context.flag_gogo = false;
+                }
+                BarLineOff => {
+                    self.flag_bar_line = false;
+                }
+                BarLineOn => {
+                    self.flag_bar_line = true;
                 }
                 NextSong(_) => {
-                    self.offset = 0.0;
+                    if let Some(event) = events.last() {
+                        if let EventType::BarLine = event.event_type {
+                            if event.context.measure_index == 1 {
+                                events.pop();
+                            }
+                        }
+                    } else {
+                        unreachable!();
+                    }
+                    self.time_offset = 0.0;
+                    self.position_offset = 0.0;
+                    self.event_context.measure_index = 1;
                     events.push(Event {
-                        offset: 0.0,
+                        context: self.event_context.clone(),
                         event_type,
+                        time_offset: 0.0,
+                        position_offset: 0.0,
+                    });
+                    events.push(Event {
+                        context: self.event_context.clone(),
+                        event_type: EventType::BarLine,
+                        time_offset: 0.0,
+                        position_offset: 0.0,
                     });
                 }
                 _ => {
                     events.push(Event {
-                        offset: self.offset,
+                        context: self.event_context.clone(),
                         event_type,
+                        time_offset: self.time_offset,
+                        position_offset: self.position_offset,
                     });
                 }
             }
@@ -98,20 +165,17 @@ impl Context {
             // an explicit measure with an ending comma
             if self.measure_notes_count == 0 {
                 // an empty measure
-                self.offset += 60.0 / self.bpm * self.time_signature.0 as f64;
+                self.measure_notes_count = 1;
+                self.time_offset += self.seconds_per_note();
+                self.position_offset += self.unit_lengths_per_note();
             }
-            events.push(Event {
-                offset: self.offset,
-                event_type: Barline,
-            });
+            self.end_measure(events);
         } else if self.measure_notes_count != 0 {
             // an implicit measure without an ending comma
-            events.push(Event {
-                offset: self.offset,
-                event_type: Barline,
-            });
+            self.end_measure(events);
+        } else {
+            // otherwise not a measure, but just some commands; no need to increase the offsets
         }
-        // otherwise not a measure, but just some commands; no need to increase the offset
         self.measure_notes_count = 0;
     }
 
@@ -143,13 +207,16 @@ impl Context {
     }
 }
 
-impl Default for Context {
+impl Default for ParserContext {
     fn default() -> Self {
         Self {
+            measure_notes_count: 0,
+            time_offset: 0.0,
+            position_offset: 0.0,
             time_signature: (4.0, 4.0),
             bpm: 120.0,
-            measure_notes_count: 0,
-            offset: 0.0,
+            event_context: Context::default(),
+            flag_bar_line: true,
             course: Difficulty::default(),
             branch: Branch::None,
             style: Style::default(),
@@ -196,9 +263,9 @@ impl crate::Chart {
             let mut key = "";
             let mut flag_eof = false; // flag: end of file
             let mut state = State::Notes; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
-            let mut context = Context::default();
-            let mut chart_context = Context::default(); // the initial context of the chart; cloned back to `context` at the #END
-            let mut branch_start_context = Context::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
+            let mut context = ParserContext::default();
+            let mut chart_context = ParserContext::default(); // the initial context of the chart; cloned back to `context` at the #END
+            let mut branch_start_context = ParserContext::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
             let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to `chart` at the end of the measures ("," in tja)
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
@@ -347,12 +414,12 @@ impl crate::Chart {
                             chart.get_course_mut(context.course).meta.exam3 = Exam::from_str(value);
                         }
                         "#START" => {
-                            // TODO: insert the initial barline when necessary
                             match value {
                                 "P1" => context.player = Player::P1,
                                 "P2" => context.player = Player::P2,
                                 _ => context.player = Player::P0,
                             }
+                            measure.push_back(EventType::BarLine);
                         }
                         "#END" => {
                             context.move_events::<false>(
@@ -410,8 +477,8 @@ impl crate::Chart {
                         }
                         "#GOGOSTART" => measure.push_back(EventType::GogoStart),
                         "#GOGOEND" => measure.push_back(EventType::GogoEnd),
-                        "#BARLINEOFF" => measure.push_back(EventType::BarlineOff),
-                        "#BARLINEON" => measure.push_back(EventType::BarlineOn),
+                        "#BARLINEOFF" => measure.push_back(EventType::BarLineOff),
+                        "#BARLINEON" => measure.push_back(EventType::BarLineOn),
                         "#BRANCHSTART" => {
                             if let Some(branches) = Branches::from_str(value) {
                                 let course = chart.get_course_mut(context.course);
@@ -425,8 +492,10 @@ impl crate::Chart {
                                     Player::P2 => &mut course.p2,
                                 }
                                 .push(Event {
-                                    offset: context.offset,
+                                    context: context.event_context.clone(),
                                     event_type: EventType::Branch(branches),
+                                    time_offset: context.time_offset,
+                                    position_offset: context.position_offset,
                                 });
                                 context.branch = Branch::N;
                                 branch_start_context = context.clone();
@@ -465,6 +534,11 @@ impl crate::Chart {
                         "#LEVELHOLD" => measure.push_back(EventType::LevelHold),
                         "#NEXTSONG" => {
                             if let Some(next_song) = NextSong::from_str(value) {
+                                let course = chart.get_course_mut(context.course);
+                                context.move_events::<false>(
+                                    &mut measure,
+                                    context.get_events_mut(course),
+                                );
                                 measure.push_back(EventType::NextSong(next_song));
                             }
                         }

@@ -38,7 +38,8 @@ where
     } else {
         &course.p0
     };
-    println!("{:?}", course.meta);
+    println!("\n{:?}", chart.meta);
+    println!("\n{:?}\n", course.meta);
 
     if let Difficulty::Dan = course.meta.course {
     } else {
@@ -59,24 +60,24 @@ where
         t = Instant::now() - Duration::from_secs_f64(chart.meta.offset);
     }
     for event in events {
-        use tja::event::EventType::*;
+        use tja::event::event_type::EventType::*;
         match &event.event_type {
             Don | BigDon | DualPlayerDon | ADLIB | Purple => {
-                while t.elapsed().as_secs_f64() < event.offset {}
+                while t.elapsed().as_secs_f64() < event.time_offset {}
                 don.play(&stream_handle).unwrap();
             }
             Ka | BigKa | DualPlayerKa => {
-                while t.elapsed().as_secs_f64() < event.offset {}
+                while t.elapsed().as_secs_f64() < event.time_offset {}
                 ka.play(&stream_handle).unwrap();
             }
-            Drumroll | BigDrumroll => while t.elapsed().as_secs_f64() < event.offset {},
+            Drumroll | BigDrumroll => while t.elapsed().as_secs_f64() < event.time_offset {},
             Balloon | BigBalloon => {
-                while t.elapsed().as_secs_f64() < event.offset {}
+                while t.elapsed().as_secs_f64() < event.time_offset {}
                 flag_balloon = true;
             }
             End => loop {
                 let millis = t.elapsed().as_millis();
-                if millis as f64 / 1000.0 >= event.offset {
+                if millis as f64 / 1000.0 >= event.time_offset {
                     if flag_balloon {
                         balloon.play(&stream_handle).unwrap();
                         flag_balloon = false;
@@ -92,6 +93,7 @@ where
                     flag_rolled = false;
                 }
             },
+            Bomb | BarLine | Section | Lyric(_) => {}
             Branch(branches) => {
                 use tja::event::branch::Thresholds::*;
                 for event in match branches.thresholds {
@@ -112,23 +114,25 @@ where
                         }
                     }
                 } {
-                    match event.event_type {
-                        Don | BigDon => {
-                            while t.elapsed().as_secs_f64() < event.offset {}
+                    match &event.event_type {
+                        Don | BigDon | DualPlayerDon | ADLIB | Purple => {
+                            while t.elapsed().as_secs_f64() < event.time_offset {}
                             don.play(&stream_handle).unwrap();
                         }
-                        Ka | BigKa => {
-                            while t.elapsed().as_secs_f64() < event.offset {}
+                        Ka | BigKa | DualPlayerKa => {
+                            while t.elapsed().as_secs_f64() < event.time_offset {}
                             ka.play(&stream_handle).unwrap();
                         }
-                        Drumroll | BigDrumroll => while t.elapsed().as_secs_f64() < event.offset {},
+                        Drumroll | BigDrumroll => {
+                            while t.elapsed().as_secs_f64() < event.time_offset {}
+                        }
                         Balloon | BigBalloon => {
-                            while t.elapsed().as_secs_f64() < event.offset {}
+                            while t.elapsed().as_secs_f64() < event.time_offset {}
                             flag_balloon = true;
                         }
                         End => loop {
                             let millis = t.elapsed().as_millis();
-                            if millis as f64 / 1000.0 >= event.offset {
+                            if millis as f64 / 1000.0 >= event.time_offset {
                                 if flag_balloon {
                                     balloon.play(&stream_handle).unwrap();
                                     flag_balloon = false;
@@ -144,7 +148,8 @@ where
                                 flag_rolled = false;
                             }
                         },
-                        _ => {}
+                        Bomb | BarLine | Section | Lyric(_) => {}
+                        _ => unreachable!(),
                     }
                     println!("{:?}", event);
                 }
@@ -160,7 +165,7 @@ where
                 );
                 t = Instant::now();
             }
-            _ => {}
+            _ => unreachable!(),
         }
         println!("{:?}", event);
     }
