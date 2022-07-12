@@ -1,6 +1,6 @@
 #[derive(Clone)]
 pub struct Context {
-    // TODO: compress
+    // TODO: compress flags
     pub measure_index: usize,
     pub scroll: f64,
     pub flag_gogo: bool,

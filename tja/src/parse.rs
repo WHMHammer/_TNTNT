@@ -39,7 +39,7 @@ struct ParserContext {
     time_signature: (f64, f64), // numerator, denominator (#MEASURE numerator,denominator)
     bpm: f64,
     event_context: Context,
-    flag_bar_line: bool,
+    flag_barline: bool,
     course: Difficulty,
     branch: Branch,
     style: Style,
@@ -48,23 +48,31 @@ struct ParserContext {
 
 impl ParserContext {
     fn seconds_per_note(&self) -> f64 {
-        240.0 / self.bpm * self.time_signature.0
-            / self.time_signature.1
-            / self.measure_notes_count as f64
+        if self.measure_notes_count == 0 {
+            240.0 / self.bpm * self.time_signature.0 / self.time_signature.1
+        } else {
+            240.0 / self.bpm * self.time_signature.0
+                / self.time_signature.1
+                / self.measure_notes_count as f64
+        }
     }
 
     fn unit_lengths_per_note(&self) -> f64 {
         // one unit length is the length of a measure under #MEASURE 4/4 and #SCROLL 1
-        self.time_signature.0 / self.time_signature.1 / self.measure_notes_count as f64
-            * self.event_context.scroll
+        if self.measure_notes_count == 0 {
+            self.time_signature.0 / self.time_signature.1 * self.event_context.scroll
+        } else {
+            self.time_signature.0 / self.time_signature.1 / self.measure_notes_count as f64
+                * self.event_context.scroll
+        }
     }
 
     fn end_measure(&mut self, events: &mut Vec<Event>) {
         self.event_context.measure_index += 1;
-        if self.flag_bar_line {
+        if self.flag_barline {
             events.push(Event {
                 context: self.event_context.clone(),
-                event_type: EventType::BarLine,
+                event_type: EventType::Barline,
                 time_offset: self.time_offset,
                 position_offset: self.position_offset,
             });
@@ -119,38 +127,13 @@ impl ParserContext {
                 GogoEnd => {
                     self.event_context.flag_gogo = false;
                 }
-                BarLineOff => {
-                    self.flag_bar_line = false;
+                BarlineOff => {
+                    self.flag_barline = false;
                 }
-                BarLineOn => {
-                    self.flag_bar_line = true;
+                BarlineOn => {
+                    self.flag_barline = true;
                 }
-                NextSong(_) => {
-                    if let Some(event) = events.last() {
-                        if let EventType::BarLine = event.event_type {
-                            if event.context.measure_index == 1 {
-                                events.pop();
-                            }
-                        }
-                    } else {
-                        unreachable!();
-                    }
-                    self.time_offset = 0.0;
-                    self.position_offset = 0.0;
-                    self.event_context.measure_index = 1;
-                    events.push(Event {
-                        context: self.event_context.clone(),
-                        event_type,
-                        time_offset: 0.0,
-                        position_offset: 0.0,
-                    });
-                    events.push(Event {
-                        context: self.event_context.clone(),
-                        event_type: EventType::BarLine,
-                        time_offset: 0.0,
-                        position_offset: 0.0,
-                    });
-                }
+                NextSong(_) => unreachable!(),
                 _ => {
                     events.push(Event {
                         context: self.event_context.clone(),
@@ -165,9 +148,8 @@ impl ParserContext {
             // an explicit measure with an ending comma
             if self.measure_notes_count == 0 {
                 // an empty measure
-                self.measure_notes_count = 1;
-                self.time_offset += self.seconds_per_note();
-                self.position_offset += self.unit_lengths_per_note();
+                self.time_offset += seconds_per_note;
+                self.position_offset += unit_lengths_per_note;
             }
             self.end_measure(events);
         } else if self.measure_notes_count != 0 {
@@ -216,7 +198,7 @@ impl Default for ParserContext {
             time_signature: (4.0, 4.0),
             bpm: 120.0,
             event_context: Context::default(),
-            flag_bar_line: true,
+            flag_barline: true,
             course: Difficulty::default(),
             branch: Branch::None,
             style: Style::default(),
@@ -413,14 +395,11 @@ impl crate::Chart {
                         "EXAM3" => {
                             chart.get_course_mut(context.course).meta.exam3 = Exam::from_str(value);
                         }
-                        "#START" => {
-                            match value {
-                                "P1" => context.player = Player::P1,
-                                "P2" => context.player = Player::P2,
-                                _ => context.player = Player::P0,
-                            }
-                            measure.push_back(EventType::BarLine);
-                        }
+                        "#START" => match value {
+                            "P1" => context.player = Player::P1,
+                            "P2" => context.player = Player::P2,
+                            _ => context.player = Player::P0,
+                        },
                         "#END" => {
                             context.move_events::<false>(
                                 &mut measure,
@@ -477,8 +456,8 @@ impl crate::Chart {
                         }
                         "#GOGOSTART" => measure.push_back(EventType::GogoStart),
                         "#GOGOEND" => measure.push_back(EventType::GogoEnd),
-                        "#BARLINEOFF" => measure.push_back(EventType::BarLineOff),
-                        "#BARLINEON" => measure.push_back(EventType::BarLineOn),
+                        "#BARLINEOFF" => measure.push_back(EventType::BarlineOff),
+                        "#BARLINEON" => measure.push_back(EventType::BarlineOn),
                         "#BRANCHSTART" => {
                             if let Some(branches) = Branches::from_str(value) {
                                 let course = chart.get_course_mut(context.course);
@@ -535,11 +514,17 @@ impl crate::Chart {
                         "#NEXTSONG" => {
                             if let Some(next_song) = NextSong::from_str(value) {
                                 let course = chart.get_course_mut(context.course);
-                                context.move_events::<false>(
-                                    &mut measure,
-                                    context.get_events_mut(course),
-                                );
-                                measure.push_back(EventType::NextSong(next_song));
+                                let events = context.get_events_mut(course);
+                                context.move_events::<false>(&mut measure, events);
+                                events.push(Event {
+                                    context: context.event_context.clone(),
+                                    event_type: EventType::NextSong(next_song),
+                                    time_offset: 0.0,
+                                    position_offset: 0.0,
+                                });
+                                context.time_offset = 0.0;
+                                context.position_offset = 0.0;
+                                context.event_context.measure_index = 1;
                             }
                         }
                         _ => {

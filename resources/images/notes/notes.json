@@ -1,0 +1,66 @@
+{
+    "don": {
+        "ox": 53,
+        "oy": 53
+    },
+    "ka": {
+        "ox": 53,
+        "oy": 53
+    },
+    "big_don": {
+        "ox": 80,
+        "oy": 80
+    },
+    "big_ka": {
+        "ox": 80,
+        "oy": 80
+    },
+    "drumroll_head": {
+        "ox": 53,
+        "oy": 53
+    },
+    "drumroll_body": {
+        "ox": null,
+        "oy": 53
+    },
+    "drumroll_tail": {
+        "ox": null,
+        "oy": 53
+    },
+    "big_drumroll_head": {
+        "ox": 80,
+        "oy": 80
+    },
+    "big_drumroll_body": {
+        "ox": null,
+        "oy": 80
+    },
+    "big_drumroll_tail": {
+        "ox": null,
+        "oy": 80
+    },
+    "balloon_head": {
+        "ox": 53,
+        "oy": 53
+    },
+    "balloon_tail": {
+        "ox": null,
+        "oy": 53
+    },
+    "big_balloon_head": {
+        "ox": 53,
+        "oy": 53
+    },
+    "big_balloon_tail": {
+        "ox": null,
+        "oy": 53
+    },
+    "mine": {
+        "ox": 86,
+        "oy": 86
+    },
+    "purple": {
+        "ox": 86,
+        "oy": 86
+    }
+}
