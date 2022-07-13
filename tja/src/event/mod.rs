@@ -19,7 +19,7 @@ impl std::fmt::Debug for Event {
             NextSong(_) => write!(f, "\n{:?}", self.event_type),
             _ => write!(
                 f,
-                "{:?} @ {:07.3}s, {:07.3} unit lengths {:?}",
+                "{:?} @ t = {:07.3}, d = {:07.3} {:?}",
                 self.event_type, self.time_offset, self.position_offset, self.context
             ),
         }

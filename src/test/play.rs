@@ -93,7 +93,7 @@ where
                     flag_rolled = false;
                 }
             },
-            Bomb | Barline | Section | Lyric(_) => {}
+            Bomb | Barline | GogoStart | Section | Lyric(_) => {}
             Branch(branches) => {
                 use tja::event::branch::Thresholds::*;
                 for event in match branches.thresholds {
@@ -148,7 +148,7 @@ where
                                 flag_rolled = false;
                             }
                         },
-                        Bomb | Barline | Section | Lyric(_) => {}
+                        Bomb | Barline | GogoStart | Section | Lyric(_) => {}
                         _ => unreachable!(),
                     }
                     println!("{:?}", event);

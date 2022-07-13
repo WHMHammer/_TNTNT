@@ -1,7 +1,6 @@
 #[derive(Clone)]
 pub struct Context {
-    // TODO: compress flags
-    pub measure_index: usize,
+    // no need to compress the flags since the struct will be aligned to 8 bytes anyway
     pub scroll: f64,
     pub flag_gogo: bool,
     pub flag_level_hold: bool,
@@ -10,7 +9,6 @@ pub struct Context {
 impl Default for Context {
     fn default() -> Self {
         Self {
-            measure_index: 1,
             scroll: 1.0,
             flag_gogo: false,
             flag_level_hold: false,
@@ -20,8 +18,7 @@ impl Default for Context {
 
 impl std::fmt::Debug for Context {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(measure {:03}", self.measure_index)?;
-        write!(f, ", scroll = {}", self.scroll)?;
+        write!(f, "(scroll = {}", self.scroll)?;
         if self.flag_gogo {
             write!(f, ", GOGO")?;
         }

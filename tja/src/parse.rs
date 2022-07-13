@@ -68,7 +68,6 @@ impl ParserContext {
     }
 
     fn end_measure(&mut self, events: &mut Vec<Event>) {
-        self.event_context.measure_index += 1;
         if self.flag_barline {
             events.push(Event {
                 context: self.event_context.clone(),
@@ -123,6 +122,12 @@ impl ParserContext {
                 }
                 GogoStart => {
                     self.event_context.flag_gogo = true;
+                    events.push(Event {
+                        context: self.event_context.clone(),
+                        event_type,
+                        time_offset: self.time_offset,
+                        position_offset: self.position_offset,
+                    });
                 }
                 GogoEnd => {
                     self.event_context.flag_gogo = false;
@@ -524,7 +529,6 @@ impl crate::Chart {
                                 });
                                 context.time_offset = 0.0;
                                 context.position_offset = 0.0;
-                                context.event_context.measure_index = 1;
                             }
                         }
                         _ => {
