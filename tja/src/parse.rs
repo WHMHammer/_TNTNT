@@ -6,6 +6,7 @@ use crate::event::{
     branch::Branches, context::Context, event_type::EventType, next_song::NextSong, Event,
 };
 use crate::meta::scoremode::Scoremode;
+use std::collections::VecDeque;
 
 #[derive(PartialEq)]
 enum State {
@@ -67,20 +68,9 @@ impl ParserContext {
         }
     }
 
-    fn end_measure(&mut self, events: &mut Vec<Event>) {
-        if self.flag_barline {
-            events.push(Event {
-                context: self.event_context.clone(),
-                event_type: EventType::Barline,
-                time_offset: self.time_offset,
-                position_offset: self.position_offset,
-            });
-        }
-    }
-
     fn move_events<const FLAG_EXPLICIT_MEASURE: bool>(
         &mut self,
-        measure: &mut std::collections::VecDeque<EventType>,
+        measure: &mut VecDeque<EventType>,
         events: &mut Vec<Event>,
     ) {
         use EventType::*;
@@ -150,23 +140,38 @@ impl ParserContext {
             }
         }
         if FLAG_EXPLICIT_MEASURE {
-            // an explicit measure with an ending comma
+            // an explicit measure ends with a comma
             if self.measure_notes_count == 0 {
-                // an empty measure
+                // empty measure
                 self.time_offset += seconds_per_note;
                 self.position_offset += unit_lengths_per_note;
             }
-            self.end_measure(events);
+            if self.flag_barline {
+                events.push(Event {
+                    context: self.event_context.clone(),
+                    event_type: EventType::Barline,
+                    time_offset: self.time_offset,
+                    position_offset: self.position_offset,
+                });
+            }
         } else if self.measure_notes_count != 0 {
-            // an implicit measure without an ending comma
-            self.end_measure(events);
+            // an implicit measure lacks the ending comma
+            if self.flag_barline {
+                events.push(Event {
+                    context: self.event_context.clone(),
+                    event_type: EventType::Barline,
+                    time_offset: self.time_offset,
+                    position_offset: self.position_offset,
+                });
+            }
         } else {
-            // otherwise not a measure, but just some commands; no need to increase the offsets
+            // not a measure, but just some commands
         }
         self.measure_notes_count = 0;
     }
 
     fn get_events_mut<'course>(&self, course: &'course mut Course) -> &'course mut Vec<Event> {
+        // TODO: simplify this
         if self.branch == Branch::None {
             match self.player {
                 Player::P0 => &mut course.p0,
@@ -240,7 +245,7 @@ impl crate::Chart {
             if text.is_none() {
                 return Err(());
             }
-            let text = text.unwrap(); // never panics because the None case is checkout above
+            let text = text.unwrap(); // never panics because the None case is just checkout above
             let mut chart = Self::default();
             let mut char_indices = text.char_indices();
             let mut i = 0;
@@ -248,19 +253,19 @@ impl crate::Chart {
             let mut index_low = 0;
             let mut index_high = 0;
             let mut key = "";
-            let mut flag_eof = false; // flag: end of file
+            let mut flag_end_of_file = false; // flag: end of file
             let mut state = State::Notes; // the "state" of the current line; one line records either a meta datum (e.g. TITLE:xxx) or a command (e.g. #MEASURE a,b) or some notes
             let mut context = ParserContext::default();
             let mut chart_context = ParserContext::default(); // the initial context of the chart; cloned back to `context` at the #END
             let mut branch_start_context = ParserContext::default(); // the context at #BRANCHSTART; cloned back to `context` when shifting to another branch
-            let mut measure = std::collections::VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to `chart` at the end of the measures ("," in tja)
+            let mut measure = VecDeque::new(); // the temporary buffer containing the events in the current measure; its contents will be moved to `chart` at the end of the measures ("," in tja)
             loop {
                 let character = if let Some((index, character)) = char_indices.next() {
                     i = index;
                     character
                 } else {
                     // the file may not have an ending line break, in which case we simulate one
-                    flag_eof = true;
+                    flag_end_of_file = true;
                     i += 1;
                     '\n'
                 };
@@ -345,7 +350,7 @@ impl crate::Chart {
                                 chart.get_course_mut(context.course).meta.level = level;
                             }
                         }
-                        "BigBalloon" => {
+                        "BALLOON" => {
                             for value in value.split(',') {
                                 if let Ok(value) = value.parse() {
                                     if context.style == Style::Single {
@@ -418,12 +423,8 @@ impl crate::Chart {
                                 let mut file =
                                     std::fs::File::create(String::from_utf8(path).unwrap())
                                         .unwrap();
-                                write!(
-                                    &mut file,
-                                    "{:#?}",
-                                    chart.get_course(context.course).unwrap()
-                                )
-                                .unwrap();
+                                write!(&mut file, "{:#?}", chart.get_course_mut(context.course))
+                                    .unwrap();
                             }
                             let course = context.course;
                             context = chart_context.clone(); // the STYLE info is lost, but it doesn't matter
@@ -433,12 +434,16 @@ impl crate::Chart {
                             let mut values = value.split('/');
                             if let Some(numerator) = values.next() {
                                 if let Ok(numerator) = numerator.parse() {
-                                    if let Some(denominator) = values.next() {
-                                        if let Ok(denominator) = denominator.parse() {
-                                            measure.push_back(EventType::Measure(
-                                                numerator,
-                                                denominator,
-                                            ));
+                                    if numerator != 0 {
+                                        if let Some(denominator) = values.next() {
+                                            if let Ok(denominator) = denominator.parse() {
+                                                if denominator != 0 {
+                                                    measure.push_back(EventType::Measure(
+                                                        numerator,
+                                                        denominator,
+                                                    ));
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -603,7 +608,7 @@ impl crate::Chart {
                         _ => {}
                     }
                 }
-                if flag_eof {
+                if flag_end_of_file {
                     {
                         use std::io::Write;
                         let mut file = std::fs::File::create("Chart.out").unwrap();

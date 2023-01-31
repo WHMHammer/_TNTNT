@@ -18,14 +18,22 @@ struct VisualizerUiLayoutXml {
 }
 
 #[derive(Debug)]
-pub struct VisualizerUiLayout {
+pub struct VisualizerUiLayout<'a> {
+    lane_configurations: &'a LaneConfigurations,
+    notes_configurations: &'a NotesConfigurations,
     width: u32,
     height: u32,
     oy: i64, // "o" means center
 }
 
-impl VisualizerUiLayout {
-    pub fn load<P>(path: P, default_width: u32, default_height: u32) -> Self
+impl<'a> VisualizerUiLayout<'a> {
+    pub fn load<P>(
+        path: P,
+        default_width: u32,
+        default_height: u32,
+        lane_configurations: &'a LaneConfigurations,
+        notes_configurations: &'a NotesConfigurations,
+    ) -> Self
     where
         P: AsRef<std::path::Path>,
     {
@@ -35,6 +43,8 @@ impl VisualizerUiLayout {
             Default::default()
         };
         let mut layout = Self {
+            lane_configurations,
+            notes_configurations,
             width: xml.width.unwrap_or(default_width),
             height: xml.height.unwrap_or(default_height),
             oy: 0,
@@ -43,12 +53,7 @@ impl VisualizerUiLayout {
         layout
     }
 
-    pub fn lane(
-        &self,
-        width_scale: f64,
-        branch: Branch,
-        lane_configurations: &LaneConfigurations,
-    ) -> Result<RgbaImage, ()> {
+    pub fn lane(&self, width_scale: f64, branch: Branch) -> Result<RgbaImage, ()> {
         let width = (width_scale * self.width as f64) as u32;
         let mut canvas = RgbaImage::new(width, self.height);
         let resource = image::open("resources/images/lane/lane.png").or(Err(()))?;
@@ -58,7 +63,7 @@ impl VisualizerUiLayout {
             &resource,
             0,
             self.oy
-                - if let Some(lane) = &lane_configurations.lane {
+                - if let Some(lane) = &self.lane_configurations.lane {
                     lane.oy.unwrap_or((resource.height() / 2) as i64)
                 } else {
                     (resource.height() / 2) as i64
@@ -82,8 +87,8 @@ impl VisualizerUiLayout {
                     self.oy
                         - if let Some(lane) = match &branch {
                             N => unreachable!(),
-                            E => &lane_configurations.e_branch,
-                            M => &lane_configurations.m_branch,
+                            E => &self.lane_configurations.e_branch,
+                            M => &self.lane_configurations.m_branch,
                         } {
                             lane.oy.unwrap_or((resource.height() / 2) as i64)
                         } else {

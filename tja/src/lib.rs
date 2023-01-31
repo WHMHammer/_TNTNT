@@ -18,20 +18,8 @@ pub struct Chart {
 }
 
 impl Chart {
-    pub fn get_course(&self, c: Difficulty) -> Option<&Course> {
-        use Difficulty::*;
-        match c {
-            Easy => self.easy_course.as_ref(),
-            Normal => self.normal_course.as_ref(),
-            Hard => self.hard_course.as_ref(),
-            Oni => self.oni_course.as_ref(),
-            Edit => self.edit_course.as_ref(),
-            Dan => self.dan_course.as_ref(),
-            Tower => self.tower_course.as_ref(),
-        }
-    }
-
     pub fn get_course_mut(&mut self, c: Difficulty) -> &mut Course {
+        // TODO: simplify this
         use Difficulty::*;
         match c {
             Easy => {
